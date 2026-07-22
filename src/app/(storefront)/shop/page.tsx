@@ -20,7 +20,7 @@ export default async function ShopPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 pb-24 md:pb-8">
-      <div className="mb-5">
+      <div className="hidden md:block mb-5">
         <SearchBar defaultValue={q} />
       </div>
 
