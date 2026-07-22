@@ -25,6 +25,40 @@ describe("createMockDb", () => {
       expect((await db.categories.findBySlug("seeds"))?.slug).toBe("seeds");
       expect(await db.categories.findBySlug("missing")).toBeNull();
     });
+
+    it("findById finds an existing category and returns null otherwise", async () => {
+      const db = createMockDb();
+      const category = await db.categories.create({ slug: "compost", name: "Compost", parentId: null });
+      expect((await db.categories.findById(category.id))?.name).toBe("Compost");
+      expect(await db.categories.findById("missing")).toBeNull();
+    });
+
+    it("create adds a category with a generated id and rejects a duplicate slug", async () => {
+      const db = createMockDb();
+      const created = await db.categories.create({ slug: "compost", name: "Compost", parentId: null, sortOrder: 5 });
+      expect(created.id).toMatch(/^CAT-/);
+      expect((await db.categories.list()).some((c) => c.id === created.id)).toBe(true);
+      await expect(db.categories.create({ slug: "compost", name: "Compost 2", parentId: null })).rejects.toThrow(
+        "duplicate key"
+      );
+    });
+
+    it("update patches an existing category, rejects a slug collision, and throws for an unknown id", async () => {
+      const db = createMockDb();
+      const created = await db.categories.create({ slug: "compost", name: "Compost", parentId: null });
+      const updated = await db.categories.update(created.id, { name: "Organic Compost" });
+      expect(updated.name).toBe("Organic Compost");
+      await expect(db.categories.update(created.id, { slug: "seeds" })).rejects.toThrow("duplicate key");
+      await expect(db.categories.update("missing", { name: "X" })).rejects.toThrow("Category missing not found");
+    });
+
+    it("delete removes a category with no products, and rejects one still in use", async () => {
+      const db = createMockDb();
+      const created = await db.categories.create({ slug: "compost", name: "Compost", parentId: null });
+      await db.categories.delete(created.id);
+      expect(await db.categories.findById(created.id)).toBeNull();
+      await expect(db.categories.delete("cat-seeds")).rejects.toThrow("foreign key constraint");
+    });
   });
 
   describe("products", () => {
@@ -122,6 +156,17 @@ describe("createMockDb", () => {
       expect(second.customerId).toBe(byPhone[0].customerId);
     });
 
+    it("create updates the stored email when a repeat customer supplies a new one", async () => {
+      const db = createMockDb();
+      await db.orders.create(baseOrderInput);
+      await db.orders.create({
+        ...baseOrderInput,
+        customer: { ...baseOrderInput.customer, email: "ravi@example.com" },
+      });
+      const [customer] = await db.customers.list();
+      expect(customer.email).toBe("ravi@example.com");
+    });
+
     it("create throws when a cart item references a variant that doesn't exist", async () => {
       const db = createMockDb();
       await expect(db.orders.create({ ...baseOrderInput, items: [{ variantId: "missing", quantity: 1 }] })).rejects.toThrow("Variant missing not found");
@@ -186,6 +231,61 @@ describe("createMockDb", () => {
       expect(await db.staff.findByEmail("missing@example.com")).toBeNull();
       expect((await db.staff.findById("STAFF-1"))?.email).toBe("admin@asquareagro.com");
       expect(await db.staff.findById("missing")).toBeNull();
+    });
+  });
+
+  describe("customers", () => {
+    it("list aggregates order count, spend (excluding cancelled/returned) and last order date per customer", async () => {
+      // Pin the clock so the two orders get distinct createdAt timestamps —
+      // otherwise same-millisecond creation makes lastOrderAt's ">" comparison
+      // depend on iteration order rather than the logic under test.
+      vi.useFakeTimers();
+      const db = createMockDb();
+      vi.setSystemTime(new Date("2026-07-01T00:00:00.000Z"));
+      const first = await db.orders.create(baseOrderInput);
+      vi.setSystemTime(new Date("2026-07-01T00:00:01.000Z"));
+      const second = await db.orders.create(baseOrderInput);
+      vi.useRealTimers();
+      await db.orders.updateStatus(second.id, "cancelled");
+
+      const [customer] = await db.customers.list();
+      expect(customer.orderCount).toBe(2);
+      expect(customer.totalSpent).toBe(first.total);
+      expect(customer.lastOrderAt).toBe(second.createdAt);
+    });
+
+    it("list returns an empty array when there are no customers yet", async () => {
+      const db = createMockDb();
+      expect(await db.customers.list()).toEqual([]);
+    });
+
+    it("keeps the running-latest order date when an earlier order is created after a later one", async () => {
+      vi.useFakeTimers();
+      const db = createMockDb();
+      vi.setSystemTime(new Date("2026-07-15T00:00:00.000Z"));
+      const later = await db.orders.create(baseOrderInput);
+      vi.setSystemTime(new Date("2026-07-01T00:00:00.000Z"));
+      await db.orders.create(baseOrderInput);
+      vi.useRealTimers();
+
+      const [customer] = await db.customers.list();
+      expect(customer.lastOrderAt).toBe(later.createdAt);
+    });
+
+    it("list sorts customers by their most recent order, newest first", async () => {
+      // Pin the clock so the two customers' orders land on distinct
+      // timestamps — same-millisecond creation would make the sort's
+      // outcome depend on insertion order rather than the comparator.
+      vi.useFakeTimers();
+      const db = createMockDb();
+      vi.setSystemTime(new Date("2026-07-01T00:00:00.000Z"));
+      await db.orders.create(baseOrderInput);
+      vi.setSystemTime(new Date("2026-07-10T00:00:00.000Z"));
+      await db.orders.create({ ...baseOrderInput, customer: { fullName: "Other", phone: "9000000000" } });
+      vi.useRealTimers();
+
+      const customers = await db.customers.list();
+      expect(customers.map((c) => c.phone)).toEqual(["9000000000", "9876543210"]);
     });
   });
 

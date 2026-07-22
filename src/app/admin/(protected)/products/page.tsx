@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getDb } from "@/lib/db";
 import { ButtonLink } from "@/components/ui/Button";
+import { Pagination } from "@/components/admin/Pagination";
+import { paginate, parsePage } from "@/lib/pagination";
 
 const STATUS_STYLES: Record<string, string> = {
   active: "bg-primary-50 text-primary-700",
@@ -8,17 +10,47 @@ const STATUS_STYLES: Record<string, string> = {
   archived: "bg-gray-100 text-gray-600",
 };
 
-export default async function AdminProductsPage() {
+interface AdminProductsPageProps {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}
+
+export default async function AdminProductsPage({ searchParams }: AdminProductsPageProps) {
+  const { q, page: pageParam } = await searchParams;
   const db = getDb();
-  const [products, categories] = await Promise.all([db.products.listAll(), db.categories.list()]);
+  const [allProducts, categories] = await Promise.all([db.products.listAll(), db.categories.list()]);
   const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? "—";
+
+  const query = q?.trim().toLowerCase();
+  const filtered = query
+    ? allProducts.filter((p) => p.name.toLowerCase().includes(query) || p.brand.toLowerCase().includes(query))
+    : allProducts;
+
+  const page = parsePage(pageParam, filtered.length);
+  const { items: products, totalPages } = paginate(filtered, page);
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="font-display font-bold text-2xl text-foreground">Products</h1>
         <ButtonLink href="/admin/products/new">+ New product</ButtonLink>
       </div>
+
+      <form action="/admin/products" method="GET" className="flex gap-2 max-w-sm">
+        <input
+          type="search"
+          name="q"
+          defaultValue={q}
+          placeholder="Search by name or brand…"
+          aria-label="Search products"
+          className="h-10 flex-1 rounded-control border border-border bg-surface px-3.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary-300"
+        />
+        <button
+          type="submit"
+          className="h-10 rounded-control bg-primary-700 text-white text-sm font-medium px-4 hover:bg-primary-800"
+        >
+          Search
+        </button>
+      </form>
 
       <div className="rounded-card border border-border bg-surface overflow-x-auto">
         <table className="w-full text-sm">
@@ -55,7 +87,12 @@ export default async function AdminProductsPage() {
             })}
           </tbody>
         </table>
-        {products.length === 0 && <p className="text-sm text-muted p-6 text-center">No products yet.</p>}
+        {filtered.length === 0 && (
+          <p className="text-sm text-muted p-6 text-center">
+            {query ? `No products match "${q}".` : "No products yet."}
+          </p>
+        )}
+        <Pagination page={page} totalPages={totalPages} basePath="/admin/products" searchParams={{ q }} />
       </div>
     </div>
   );

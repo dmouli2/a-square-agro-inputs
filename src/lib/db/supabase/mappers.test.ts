@@ -20,8 +20,17 @@ describe("mapCategory", () => {
         description: "desc",
         image_url: "img.png",
         parent_id: "c0",
+        sort_order: 3,
       })
-    ).toEqual({ id: "c1", slug: "seeds", name: "Seeds", description: "desc", imageUrl: "img.png", parentId: "c0" });
+    ).toEqual({
+      id: "c1",
+      slug: "seeds",
+      name: "Seeds",
+      description: "desc",
+      imageUrl: "img.png",
+      parentId: "c0",
+      sortOrder: 3,
+    });
   });
 
   it("defaults optional fields when absent", () => {
@@ -29,6 +38,7 @@ describe("mapCategory", () => {
     expect(result.description).toBeUndefined();
     expect(result.imageUrl).toBeUndefined();
     expect(result.parentId).toBeNull();
+    expect(result.sortOrder).toBe(0);
   });
 });
 

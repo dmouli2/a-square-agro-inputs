@@ -16,6 +16,8 @@ export interface Category {
   description?: string;
   imageUrl?: string;
   parentId?: string | null;
+  /** Storefront display order — lower first. */
+  sortOrder?: number;
 }
 
 /**
@@ -84,6 +86,14 @@ export interface Customer {
   fullName: string;
   phone: string;
   email?: string;
+}
+
+/** A customer plus purchase aggregates, for the admin customer list. */
+export interface CustomerSummary extends Customer {
+  orderCount: number;
+  /** Sum of order totals, excluding cancelled/returned orders. */
+  totalSpent: number;
+  lastOrderAt: string | null;
 }
 
 export interface OrderItem {

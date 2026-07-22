@@ -2,6 +2,7 @@ import type {
   Category,
   Coupon,
   CreateOrderInput,
+  CustomerSummary,
   Order,
   Product,
   ProductVariant,
@@ -12,6 +13,14 @@ import type {
 export interface CategoryRepository {
   list(): Promise<Category[]>;
   findBySlug(slug: string): Promise<Category | null>;
+  findById(id: string): Promise<Category | null>;
+  create(input: Omit<Category, "id">): Promise<Category>;
+  update(id: string, patch: Partial<Omit<Category, "id">>): Promise<Category>;
+  delete(id: string): Promise<void>;
+}
+
+export interface CustomerRepository {
+  list(): Promise<CustomerSummary[]>;
 }
 
 export interface ProductRepository {
@@ -50,4 +59,5 @@ export interface Database {
   orders: OrderRepository;
   coupons: CouponRepository;
   staff: StaffRepository;
+  customers: CustomerRepository;
 }

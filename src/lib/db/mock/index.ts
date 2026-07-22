@@ -1,9 +1,10 @@
 import bcrypt from "bcryptjs";
 import type { Database } from "@/lib/db/types";
 import { CATEGORIES, PRODUCTS } from "@/lib/mock-data";
-import type { Address, Customer, Order, OrderItem, ProductWithVariants, Staff } from "@/types";
+import type { Address, Category, Customer, CustomerSummary, Order, OrderItem, ProductWithVariants, Staff } from "@/types";
 
 interface MockStore {
+  categories: Category[];
   products: ProductWithVariants[];
   orders: Order[];
   customers: Customer[];
@@ -12,6 +13,7 @@ interface MockStore {
   nextAddressId: number;
   nextProductId: number;
   nextVariantId: number;
+  nextCategoryId: number;
 }
 
 const MOCK_STAFF: Staff[] = [
@@ -34,6 +36,7 @@ function getStore(): MockStore {
   const g = globalThis as typeof globalThis & { __a2MockStore?: MockStore };
   if (!g.__a2MockStore) {
     g.__a2MockStore = {
+      categories: CATEGORIES.map((c) => ({ ...c })),
       products: PRODUCTS.map((p) => ({ ...p, variants: p.variants.map((v) => ({ ...v })) })),
       orders: [],
       customers: [],
@@ -42,6 +45,7 @@ function getStore(): MockStore {
       nextAddressId: 1,
       nextProductId: 1,
       nextVariantId: 1,
+      nextCategoryId: 1,
     };
   }
   return g.__a2MockStore;
@@ -68,17 +72,47 @@ export function createMockDb(): Database {
   return {
     categories: {
       async list() {
-        return CATEGORIES;
+        return [...getStore().categories].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
       },
       async findBySlug(slug) {
-        return CATEGORIES.find((c) => c.slug === slug) ?? null;
+        return getStore().categories.find((c) => c.slug === slug) ?? null;
+      },
+      async findById(id) {
+        return getStore().categories.find((c) => c.id === id) ?? null;
+      },
+      async create(input) {
+        const store = getStore();
+        if (store.categories.some((c) => c.slug === input.slug)) {
+          throw new Error(`duplicate key value violates unique constraint "categories_slug_key"`);
+        }
+        const created: Category = { id: `CAT-${store.nextCategoryId++}`, ...input };
+        store.categories.push(created);
+        return created;
+      },
+      async update(id, patch) {
+        const store = getStore();
+        const category = store.categories.find((c) => c.id === id);
+        if (!category) throw new Error(`Category ${id} not found`);
+        if (patch.slug && store.categories.some((c) => c.id !== id && c.slug === patch.slug)) {
+          throw new Error(`duplicate key value violates unique constraint "categories_slug_key"`);
+        }
+        Object.assign(category, patch);
+        return category;
+      },
+      async delete(id) {
+        const store = getStore();
+        // Mirrors the FK restriction the real database enforces.
+        if (store.products.some((p) => p.categoryId === id)) {
+          throw new Error(`update or delete on table "categories" violates foreign key constraint`);
+        }
+        store.categories = store.categories.filter((c) => c.id !== id);
       },
     },
     products: {
       async list(params) {
         let results = getStore().products.filter((p) => p.status === "active");
         if (params?.categorySlug) {
-          const category = CATEGORIES.find((c) => c.slug === params.categorySlug);
+          const category = getStore().categories.find((c) => c.slug === params.categorySlug);
           results = results.filter((p) => p.categoryId === category?.id);
         }
         if (params?.search) {
@@ -221,6 +255,27 @@ export function createMockDb(): Database {
       },
       async findById(id) {
         return MOCK_STAFF.find((s) => s.id === id) ?? null;
+      },
+    },
+    customers: {
+      async list() {
+        const store = getStore();
+        return store.customers
+          .map((customer): CustomerSummary => {
+            const orders = store.orders.filter((o) => o.customerId === customer.id);
+            const counted = orders.filter((o) => o.status !== "cancelled" && o.status !== "returned");
+            const lastOrderAt = orders.reduce<string | null>(
+              (latest, o) => (latest === null || o.createdAt > latest ? o.createdAt : latest),
+              null
+            );
+            return {
+              ...customer,
+              orderCount: orders.length,
+              totalSpent: counted.reduce((sum, o) => sum + o.total, 0),
+              lastOrderAt,
+            };
+          })
+          .sort((a, b) => (b.lastOrderAt ?? "").localeCompare(a.lastOrderAt ?? ""));
       },
     },
   };

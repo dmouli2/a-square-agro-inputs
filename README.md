@@ -125,14 +125,34 @@ decorative) but reuses the same color/font tokens.
   separated from link building with that in mind.
 
 **Admin panel**
-- Categories are fixed/seeded — no add/edit/delete UI.
-- No banners/homepage content management.
-- No bulk CSV import/export for products.
-- No analytics beyond the basic dashboard counts (no trends, top sellers, charts).
-- No staff management UI — more admin accounts only via `scripts/create-admin.mjs`.
-- No customer list view (records exist from checkout, nothing displays them).
+- Out of scope (decided 2026-07-22, don't re-propose): staff management UI — one admin account
+  via `scripts/create-admin.mjs` is sufficient; banners/homepage content management; bulk CSV
+  import/export for products.
+- ~~Categories are fixed/seeded~~ **Done (2026-07-22): dynamic category CRUD.** `/admin/categories`
+  (list, `new`, `[id]/edit`) backed by `CategoryRepository.create/update/delete` in
+  `src/lib/db/types.ts` — no migration needed, the live `categories` table already had `slug`
+  (unique), `sort_order`, `parent_id`, `description`, `image_url`. Slug is regenerated from the
+  name on every save (`slugify`); a duplicate name surfaces as a friendly "already exists" error
+  instead of the raw Postgres unique-violation. Delete is blocked (action + UI both) while any
+  product still references the category — `src/app/actions/categories.ts`'s `deleteCategory`
+  checks `products.listAll()` first for a friendly message, backed by the real FK constraint.
+- ~~No customer list view~~ **Done (2026-07-22).** `/admin/customers` — new `CustomerRepository`
+  port (`src/lib/db/types.ts`) joins `customers` to `orders` and aggregates order count, total
+  spend (cancelled/returned excluded, matching the dashboard revenue rule) and last-order date
+  per customer, mock and Supabase adapters both implemented.
+- ~~No analytics beyond the basic dashboard counts~~ **Done (2026-07-22).** Pure, unit-tested
+  aggregation functions in `src/lib/analytics.ts` (`revenueTrend`, `topSellers`,
+  `statusBreakdown`) feed three new dashboard sections: a 14-day daily revenue bar chart (zero-
+  filled so the x-axis has no gaps, `title` attribute + a `sr-only` table for accessibility),
+  a top-5-sellers-by-units ranking, and an order-status breakdown reusing the existing status
+  color tokens. Colors reuse the app's brand `--primary-*` ramp and existing per-status colors
+  rather than introducing a new palette.
+- ~~No search/pagination on the products/orders tables~~ **Done (2026-07-22).** Both admin tables
+  get a `?q=` search box (products: name/brand; orders: order id/customer name/phone, all
+  case-insensitive) and `?page=` pagination at 20 rows/page — shared `src/lib/pagination.ts`
+  (`parsePage`/`paginate`) and `src/components/admin/Pagination.tsx` (Previous/Next, preserves
+  the active search query in its links).
 - No hard-delete for products (status changes to draft/archived only).
-- No search/pagination on the products/orders tables (fine at today's catalog size).
 
 **Storefront**
 - No per-product SEO (`generateMetadata`) — only site-wide metadata exists.

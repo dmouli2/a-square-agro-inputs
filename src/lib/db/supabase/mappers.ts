@@ -8,6 +8,7 @@ export function mapCategory(row: Record<string, unknown>): Category {
     description: (row.description as string) ?? undefined,
     imageUrl: (row.image_url as string) ?? undefined,
     parentId: (row.parent_id as string | null) ?? null,
+    sortOrder: Number(row.sort_order ?? 0),
   };
 }
 

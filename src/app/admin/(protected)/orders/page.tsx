@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getDb } from "@/lib/db";
+import { Pagination } from "@/components/admin/Pagination";
+import { paginate, parsePage } from "@/lib/pagination";
 
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-amber-50 text-amber-700",
@@ -11,12 +13,47 @@ const STATUS_STYLES: Record<string, string> = {
   returned: "bg-red-50 text-red-700",
 };
 
-export default async function AdminOrdersPage() {
-  const orders = await getDb().orders.list();
+interface AdminOrdersPageProps {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}
+
+export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
+  const { q, page: pageParam } = await searchParams;
+  const allOrders = await getDb().orders.list();
+
+  const query = q?.trim().toLowerCase();
+  const filtered = query
+    ? allOrders.filter(
+        (o) =>
+          o.id.toLowerCase().includes(query) ||
+          o.shippingAddress.fullName.toLowerCase().includes(query) ||
+          o.shippingAddress.phone.includes(query)
+      )
+    : allOrders;
+
+  const page = parsePage(pageParam, filtered.length);
+  const { items: orders, totalPages } = paginate(filtered, page);
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="font-display font-bold text-2xl text-foreground">Orders</h1>
+
+      <form action="/admin/orders" method="GET" className="flex gap-2 max-w-sm">
+        <input
+          type="search"
+          name="q"
+          defaultValue={q}
+          placeholder="Search by order id, name or phone…"
+          aria-label="Search orders"
+          className="h-10 flex-1 rounded-control border border-border bg-surface px-3.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary-300"
+        />
+        <button
+          type="submit"
+          className="h-10 rounded-control bg-primary-700 text-white text-sm font-medium px-4 hover:bg-primary-800"
+        >
+          Search
+        </button>
+      </form>
 
       <div className="rounded-card border border-border bg-surface overflow-x-auto">
         <table className="w-full text-sm">
@@ -54,7 +91,12 @@ export default async function AdminOrdersPage() {
             ))}
           </tbody>
         </table>
-        {orders.length === 0 && <p className="text-sm text-muted p-6 text-center">No orders yet.</p>}
+        {filtered.length === 0 && (
+          <p className="text-sm text-muted p-6 text-center">
+            {query ? `No orders match "${q}".` : "No orders yet."}
+          </p>
+        )}
+        <Pagination page={page} totalPages={totalPages} basePath="/admin/orders" searchParams={{ q }} />
       </div>
     </div>
   );

@@ -7,7 +7,9 @@ import { logout } from "@/app/actions/auth";
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: "📊", exact: true },
   { href: "/admin/products", label: "Products", icon: "🌾", exact: false },
+  { href: "/admin/categories", label: "Categories", icon: "🗂️", exact: false },
   { href: "/admin/orders", label: "Orders", icon: "📦", exact: false },
+  { href: "/admin/customers", label: "Customers", icon: "👥", exact: false },
 ];
 
 function isActive(pathname: string, href: string, exact: boolean) {
