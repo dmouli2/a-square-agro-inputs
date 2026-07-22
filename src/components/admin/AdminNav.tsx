@@ -22,7 +22,10 @@ export function AdminSidebar({ staffName }: { staffName: string }) {
 
   return (
     <aside className="hidden md:flex md:w-56 md:flex-col md:shrink-0 border-r border-border bg-surface">
-      <div className="px-5 py-5 border-b border-border">
+      <div className="px-5 py-5 border-b border-border flex items-center gap-2.5">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-700 text-white font-display font-extrabold text-sm">
+          A²
+        </span>
         <span className="font-display font-extrabold text-sm text-foreground">A Square Admin</span>
       </div>
       <nav className="flex-1 flex flex-col gap-1 p-3">
