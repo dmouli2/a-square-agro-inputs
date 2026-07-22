@@ -23,6 +23,7 @@ export const PRODUCTS: ProductWithVariants[] = [
     usageInstructions: "Dilute 2ml per litre of water. Spray during early morning or evening.",
     registrationNumber: "CIB&RC/REG/2019/1234",
     hsnCode: "38089199",
+    isBestseller: true,
     variants: [
       { id: "var-1a", productId: "prod-1", sku: "TAQAT-100ML", label: "100 ml", packSize: 100, unit: "ml", price: 185, mrp: 210, stockQty: 42 },
       { id: "var-1b", productId: "prod-1", sku: "TAQAT-500ML", label: "500 ml", packSize: 500, unit: "ml", price: 820, mrp: 920, stockQty: 18 },
@@ -42,6 +43,7 @@ export const PRODUCTS: ProductWithVariants[] = [
     composition: "N 18% : P 46% : K 0%",
     usageInstructions: "Apply 50kg per acre as basal dose at the time of sowing.",
     hsnCode: "31031000",
+    isBestseller: false,
     variants: [
       { id: "var-2a", productId: "prod-2", sku: "DAP-50KG", label: "50 kg", packSize: 50, unit: "kg", price: 1350, mrp: 1400, stockQty: 60 },
     ],
@@ -59,6 +61,7 @@ export const PRODUCTS: ProductWithVariants[] = [
     cropCompatibility: ["Paddy"],
     usageInstructions: "Sow 8-10kg seed per acre in nursery, transplant after 25-30 days.",
     hsnCode: "10063000",
+    isBestseller: false,
     variants: [
       { id: "var-3a", productId: "prod-3", sku: "ARIZE6444-2KG", label: "2 kg bag", packSize: 2, unit: "kg", price: 620, mrp: 650, stockQty: 120 },
       { id: "var-3b", productId: "prod-3", sku: "ARIZE6444-10KG", label: "10 kg bag", packSize: 10, unit: "kg", price: 2950, mrp: 3100, stockQty: 34 },
@@ -76,6 +79,7 @@ export const PRODUCTS: ProductWithVariants[] = [
     status: "active",
     cropCompatibility: [],
     hsnCode: "84242000",
+    isBestseller: false,
     variants: [
       { id: "var-4a", productId: "prod-4", sku: "SPRAY-16L", label: "16 L", packSize: 16, unit: "piece", price: 2450, mrp: 2800, stockQty: 15 },
     ],
@@ -92,6 +96,7 @@ export const PRODUCTS: ProductWithVariants[] = [
     cropCompatibility: ["Vegetables", "Fruits", "Cotton"],
     composition: "N 19% : P 19% : K 19%",
     hsnCode: "31051000",
+    isBestseller: false,
     variants: [
       { id: "var-5a", productId: "prod-5", sku: "NPK-1KG", label: "1 kg", packSize: 1, unit: "kg", price: 145, mrp: 160, stockQty: 200 },
       { id: "var-5b", productId: "prod-5", sku: "NPK-5KG", label: "5 kg", packSize: 5, unit: "kg", price: 680, mrp: 750, stockQty: 75 },
@@ -111,6 +116,7 @@ export const PRODUCTS: ProductWithVariants[] = [
     usageInstructions: "Mix 2.5g per litre of water and spray at first sign of disease.",
     registrationNumber: "CIB&RC/REG/2017/0876",
     hsnCode: "38089219",
+    isBestseller: false,
     variants: [
       { id: "var-6a", productId: "prod-6", sku: "MANCO-250G", label: "250 g", packSize: 250, unit: "g", price: 165, mrp: 185, stockQty: 55 },
       { id: "var-6b", productId: "prod-6", sku: "MANCO-1KG", label: "1 kg", packSize: 1, unit: "kg", price: 580, mrp: 640, stockQty: 22 },

@@ -31,10 +31,16 @@ export function ProductCard({ product, cart = {} }: { product: ProductWithVarian
             className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"
           />
 
-          {allOutOfStock && (
+          {allOutOfStock ? (
             <span className="absolute top-2.5 left-2.5 rounded-full bg-foreground/80 text-white text-[11px] font-medium px-2.5 py-1">
               Out of stock
             </span>
+          ) : (
+            product.isBestseller && (
+              <span className="absolute top-2.5 left-2.5 rounded-md bg-accent-400 text-primary-900 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 shadow-sm">
+                Bestseller
+              </span>
+            )
           )}
         </div>
         <div className="flex flex-col gap-1 p-3.5 pb-2 min-h-[5.25rem]">

@@ -38,6 +38,8 @@ export interface Product {
   /** CIB&RC registration number — required label info for regulated agrochemicals in India. */
   registrationNumber?: string;
   hsnCode?: string;
+  /** Admin-set flag — shows the "Bestseller" ribbon on the storefront. Not derived from sales data. */
+  isBestseller: boolean;
 }
 
 export interface ProductVariant {

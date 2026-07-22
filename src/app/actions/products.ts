@@ -31,6 +31,7 @@ function readProductFields(formData: FormData) {
     usageInstructions: String(formData.get("usageInstructions") ?? "").trim() || undefined,
     registrationNumber: String(formData.get("registrationNumber") ?? "").trim() || undefined,
     hsnCode: String(formData.get("hsnCode") ?? "").trim() || undefined,
+    isBestseller: formData.get("isBestseller") === "on",
   };
 }
 

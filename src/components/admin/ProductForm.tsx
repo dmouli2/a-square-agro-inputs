@@ -57,6 +57,19 @@ export function ProductForm({ categories, mode, product }: ProductFormProps) {
         </div>
       </div>
 
+      <label className="flex items-center gap-2.5 rounded-control border border-border p-3.5 w-fit cursor-pointer">
+        <input
+          type="checkbox"
+          name="isBestseller"
+          defaultChecked={product?.isBestseller}
+          className="h-4 w-4 accent-primary-700"
+        />
+        <span className="text-sm">
+          <span className="font-medium text-foreground">Show &ldquo;Bestseller&rdquo; ribbon</span>
+          <span className="block text-xs text-muted">Your call to make — this isn&apos;t derived from sales data.</span>
+        </span>
+      </label>
+
       <div>
         <label className={labelClass}>Description</label>
         <textarea name="description" rows={3} defaultValue={product?.description} className={textareaClass} />

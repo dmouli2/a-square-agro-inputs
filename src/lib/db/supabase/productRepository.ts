@@ -25,6 +25,7 @@ function toProductRow(patch: Partial<Product>): Record<string, unknown> {
   if (patch.usageInstructions !== undefined) row.usage_instructions = patch.usageInstructions;
   if (patch.registrationNumber !== undefined) row.registration_number = patch.registrationNumber;
   if (patch.hsnCode !== undefined) row.hsn_code = patch.hsnCode;
+  if (patch.isBestseller !== undefined) row.is_bestseller = patch.isBestseller;
   return row;
 }
 

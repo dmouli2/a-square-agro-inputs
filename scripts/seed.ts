@@ -60,6 +60,7 @@ async function main() {
           usage_instructions: product.usageInstructions,
           registration_number: product.registrationNumber,
           hsn_code: product.hsnCode,
+          is_bestseller: product.isBestseller,
         },
         { onConflict: "slug" }
       )

@@ -27,6 +27,7 @@ export function mapProduct(row: Record<string, unknown>): Product {
     usageInstructions: (row.usage_instructions as string) ?? undefined,
     registrationNumber: (row.registration_number as string) ?? undefined,
     hsnCode: (row.hsn_code as string) ?? undefined,
+    isBestseller: Boolean(row.is_bestseller),
   };
 }
 
