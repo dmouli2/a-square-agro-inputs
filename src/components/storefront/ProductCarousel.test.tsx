@@ -5,7 +5,12 @@ import { ProductCarousel } from "./ProductCarousel";
 import type { ProductWithVariants } from "@/types";
 
 vi.mock("./ProductCard", () => ({
-  ProductCard: ({ product }: { product: ProductWithVariants }) => <div>{product.name}</div>,
+  ProductCard: ({ product, categorySlug }: { product: ProductWithVariants; categorySlug?: string }) => (
+    <div>
+      {product.name}
+      {categorySlug ? ` (${categorySlug})` : ""}
+    </div>
+  ),
 }));
 
 function makeProducts(count: number): ProductWithVariants[] {
@@ -39,6 +44,11 @@ describe("ProductCarousel", () => {
   it("renders nothing when there are no products", () => {
     render(<ProductCarousel products={[]} />);
     expect(screen.queryByText(/Product/)).not.toBeInTheDocument();
+  });
+
+  it("looks up each product's category slug from categoryMap and passes it through", () => {
+    render(<ProductCarousel products={makeProducts(1)} categoryMap={{ "cat-1": "seeds" }} />);
+    expect(screen.getByText("Product 0 (seeds)")).toBeInTheDocument();
   });
 
   it("disables both scroll buttons when the track doesn't overflow (jsdom has zero layout)", () => {

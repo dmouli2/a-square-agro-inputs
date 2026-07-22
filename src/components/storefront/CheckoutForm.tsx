@@ -3,6 +3,7 @@
 import { useActionState, useState, type FocusEvent } from "react";
 import { placeOrder, type CheckoutState } from "@/app/actions/checkout";
 import { Button } from "@/components/ui/Button";
+import { INDIA_STATES, INDIA_STATES_AND_DISTRICTS } from "@/lib/indiaLocations";
 
 const initialState: CheckoutState = { error: null };
 
@@ -84,15 +85,99 @@ function Field({ name, label, placeholder, type = "text", inputMode, maxLength, 
   );
 }
 
+interface SelectFieldProps {
+  name: string;
+  label: string;
+  value: string;
+  options: string[];
+  placeholder: string;
+  required?: boolean;
+  disabled?: boolean;
+  error?: string | null;
+  onChange: (value: string) => void;
+  onBlur: () => void;
+  className?: string;
+}
+
+function SelectField({
+  name,
+  label,
+  value,
+  options,
+  placeholder,
+  required,
+  disabled,
+  error,
+  onChange,
+  onBlur,
+  className,
+}: SelectFieldProps) {
+  const inputId = `checkout-${name}`;
+  return (
+    <div className={className}>
+      <label htmlFor={inputId} className="block text-xs font-medium text-muted mb-1">
+        {label}
+        {!required && " (optional)"}
+      </label>
+      <select
+        id={inputId}
+        name={name}
+        value={value}
+        disabled={disabled}
+        required={required}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${inputId}-error` : undefined}
+        className={`${fieldClass(Boolean(error))} disabled:bg-border/30 disabled:text-muted disabled:cursor-not-allowed`}
+      >
+        <option value="" disabled>
+          {placeholder}
+        </option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+      {error && (
+        <p id={`${inputId}-error`} className="mt-1 text-xs text-red-600">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function CheckoutForm({ subtotal }: { subtotal: number }) {
   const [state, formAction, isPending] = useActionState(placeOrder, initialState);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [clientErrors, setClientErrors] = useState<Record<string, string | null>>({});
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
 
   function handleBlur(e: FocusEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
     setClientErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
+  }
+
+  function handleSelectBlur(name: string, value: string) {
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    setClientErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
+  }
+
+  function handleStateChange(value: string) {
+    setSelectedState(value);
+    setSelectedDistrict("");
+    setTouched((prev) => ({ ...prev, state: true }));
+    setClientErrors((prev) => ({ ...prev, state: validateField("state", value), district: null }));
+  }
+
+  function handleDistrictChange(value: string) {
+    setSelectedDistrict(value);
+    setTouched((prev) => ({ ...prev, district: true }));
+    setClientErrors((prev) => ({ ...prev, district: validateField("district", value) }));
   }
 
   function errorFor(name: string): string | null {
@@ -127,8 +212,29 @@ export function CheckoutForm({ subtotal }: { subtotal: number }) {
           <Field name="line1" label="House / street" placeholder="House no., street name" required error={errorFor("line1")} onBlur={handleBlur} className="sm:col-span-2" />
           <Field name="line2" label="Landmark" placeholder="Near the water tank, etc." error={errorFor("line2")} onBlur={handleBlur} className="sm:col-span-2" />
           <Field name="village" label="Village / town" error={errorFor("village")} onBlur={handleBlur} className="sm:col-span-2" />
-          <Field name="district" label="District" required error={errorFor("district")} onBlur={handleBlur} />
-          <Field name="state" label="State" required error={errorFor("state")} onBlur={handleBlur} />
+          <SelectField
+            name="state"
+            label="State"
+            value={selectedState}
+            options={INDIA_STATES}
+            placeholder="Select state"
+            required
+            error={errorFor("state")}
+            onChange={handleStateChange}
+            onBlur={() => handleSelectBlur("state", selectedState)}
+          />
+          <SelectField
+            name="district"
+            label="District"
+            value={selectedDistrict}
+            options={selectedState ? INDIA_STATES_AND_DISTRICTS[selectedState] : []}
+            placeholder={selectedState ? "Select district" : "Select state first"}
+            required
+            disabled={!selectedState}
+            error={errorFor("district")}
+            onChange={handleDistrictChange}
+            onBlur={() => handleSelectBlur("district", selectedDistrict)}
+          />
           <Field
             name="pincode"
             label="Pincode"

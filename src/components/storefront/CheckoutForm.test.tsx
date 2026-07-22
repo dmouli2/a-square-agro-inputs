@@ -12,8 +12,8 @@ async function fillValidAddress(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText("Full name"), "Ravi Kumar");
   await user.type(screen.getByLabelText("Phone number"), "9876543210");
   await user.type(screen.getByLabelText("House / street"), "12 Main Road");
-  await user.type(screen.getByLabelText("District"), "Salem");
-  await user.type(screen.getByLabelText("State"), "Tamil Nadu");
+  await user.selectOptions(screen.getByLabelText("State"), "Tamil Nadu");
+  await user.selectOptions(screen.getByLabelText("District"), "Salem");
   await user.type(screen.getByLabelText("Pincode"), "636001");
 }
 
@@ -32,8 +32,8 @@ describe("CheckoutForm", () => {
     expect(screen.getByLabelText("House / street")).toBeRequired();
     expect(screen.getByLabelText("Landmark (optional)")).not.toBeRequired();
     expect(screen.getByLabelText("Village / town (optional)")).not.toBeRequired();
-    expect(screen.getByLabelText("District")).toBeRequired();
     expect(screen.getByLabelText("State")).toBeRequired();
+    expect(screen.getByLabelText("District")).toBeRequired();
     expect(screen.getByLabelText("Pincode")).toBeRequired();
 
     expect(screen.getByText("Order summary")).toBeInTheDocument();
@@ -43,6 +43,38 @@ describe("CheckoutForm", () => {
     expect(screen.getByText("Cash on Delivery — pay when it arrives.")).toBeInTheDocument();
     expect(screen.getByText("Doorstep delivery, even to your village.")).toBeInTheDocument();
     expect(screen.getByText("Your details are only used to deliver this order.")).toBeInTheDocument();
+  });
+
+  it("only lists real Indian states, and disables the district select until a state is chosen", () => {
+    render(<CheckoutForm subtotal={500} />);
+
+    const stateSelect = screen.getByLabelText("State") as HTMLSelectElement;
+    const stateOptions = Array.from(stateSelect.options).map((o) => o.value).filter(Boolean);
+    expect(stateOptions).toContain("Tamil Nadu");
+    expect(stateOptions).toContain("Kerala");
+    expect(stateOptions).toHaveLength(36);
+
+    expect(screen.getByLabelText("District")).toBeDisabled();
+  });
+
+  it("populates the district dropdown for the chosen state, and resets it if the state changes", async () => {
+    const user = userEvent.setup();
+    render(<CheckoutForm subtotal={500} />);
+
+    await user.selectOptions(screen.getByLabelText("State"), "Tamil Nadu");
+    const districtSelect = screen.getByLabelText("District") as HTMLSelectElement;
+    expect(districtSelect).not.toBeDisabled();
+    const tnDistricts = Array.from(districtSelect.options).map((o) => o.value).filter(Boolean);
+    expect(tnDistricts).toContain("Chennai");
+    expect(tnDistricts).not.toContain("Ernakulam");
+
+    await user.selectOptions(districtSelect, "Chennai");
+    expect(districtSelect).toHaveValue("Chennai");
+
+    await user.selectOptions(screen.getByLabelText("State"), "Kerala");
+    expect(districtSelect).toHaveValue("");
+    const keralaDistricts = Array.from(districtSelect.options).map((o) => o.value).filter(Boolean);
+    expect(keralaDistricts).toContain("Ernakulam");
   });
 
   it("shows an inline error the moment an invalid phone number is blurred, without waiting for submit", async () => {
@@ -87,7 +119,6 @@ describe("CheckoutForm", () => {
     ["Full name", "Enter your full name."],
     ["Phone number", "Enter your phone number."],
     ["House / street", "Enter your house / street address."],
-    ["District", "Enter your district."],
     ["State", "Enter your state."],
     ["Pincode", "Enter your pincode."],
   ])("flags %s left empty on blur", async (label, message) => {
@@ -100,6 +131,17 @@ describe("CheckoutForm", () => {
     expect(await screen.findByText(message)).toBeInTheDocument();
   });
 
+  it("flags District left empty on blur, once a state has made it selectable", async () => {
+    const user = userEvent.setup();
+    render(<CheckoutForm subtotal={500} />);
+
+    await user.selectOptions(screen.getByLabelText("State"), "Tamil Nadu");
+    await user.click(screen.getByLabelText("District"));
+    await user.tab();
+
+    expect(await screen.findByText("Enter your district.")).toBeInTheDocument();
+  });
+
   it("surfaces a server-side field error for a field the shopper hasn't blurred locally", async () => {
     vi.mocked(placeOrder).mockResolvedValue({
       error: "Please fix the highlighted fields below.",
@@ -108,16 +150,15 @@ describe("CheckoutForm", () => {
     const user = userEvent.setup();
     render(<CheckoutForm subtotal={500} />);
 
-    // Fill every required field via keyboard except pincode, which is set via
-    // fireEvent so it's never focused/blurred by this test — the click on
-    // submit blurs "State" (the last field the user actually typed into),
-    // not pincode, so touched.pincode stays false and the lookup must fall
-    // back to the server's fieldErrors for it.
+    // Fill every required field via keyboard/selection except pincode, which is set via
+    // fireEvent so it's never focused/blurred by this test — the click on submit blurs
+    // "District" (the last field the user actually interacted with), not pincode, so
+    // touched.pincode stays false and the lookup must fall back to the server's fieldErrors.
     await user.type(screen.getByLabelText("Full name"), "Ravi Kumar");
     await user.type(screen.getByLabelText("Phone number"), "9876543210");
     await user.type(screen.getByLabelText("House / street"), "12 Main Road");
-    await user.type(screen.getByLabelText("District"), "Salem");
-    await user.type(screen.getByLabelText("State"), "Tamil Nadu");
+    await user.selectOptions(screen.getByLabelText("State"), "Tamil Nadu");
+    await user.selectOptions(screen.getByLabelText("District"), "Salem");
     fireEvent.change(screen.getByLabelText("Pincode"), { target: { value: "63600" } });
     await user.click(screen.getByRole("button", { name: "Place order (Cash on Delivery)" }));
 
@@ -147,6 +188,8 @@ describe("CheckoutForm", () => {
     const formData = vi.mocked(placeOrder).mock.calls[0][1] as FormData;
     expect(formData.get("fullName")).toBe("Ravi Kumar");
     expect(formData.get("phone")).toBe("9876543210");
+    expect(formData.get("state")).toBe("Tamil Nadu");
+    expect(formData.get("district")).toBe("Salem");
     expect(formData.get("pincode")).toBe("636001");
   });
 

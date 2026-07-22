@@ -18,6 +18,7 @@
   --primary-700: #117a3b;
   --primary-800: #106132;
   --primary-900: #0e502b;
+  --primary-950: #0a3d21;
 
   /* Warm harvest accent — for CTAs, badges, sale tags */
   --accent-400: #ffb648;
@@ -48,6 +49,7 @@
   --color-primary-700: var(--primary-700);
   --color-primary-800: var(--primary-800);
   --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
 
   --color-accent-400: var(--accent-400);
   --color-accent-500: var(--accent-500);
@@ -88,4 +90,75 @@ body {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* Gentle water-floating drift for the organic-blob imagery (hero/promise sections) —
+   gives them a subtle "alive" feel without ever tugging attention away from copy/CTAs. */
+@keyframes float-drift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) rotate(0.6deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+}
+.float-organic {
+  animation: float-drift 6s ease-in-out infinite;
+}
+.float-organic-shadow {
+  animation: float-drift 6s ease-in-out infinite;
+  animation-delay: -0.4s;
+}
+
+/* Scroll-reveal primitive: JS toggles `.is-visible` (via IntersectionObserver) once a
+   section enters the viewport. Storefront interactions (cart, checkout) already require
+   JS, so unlike the rest of this file we don't special-case a no-JS fallback here. */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Infinite brand-strip scroll: two identical `.marquee-group`s sit side by side and the
+   whole `.marquee-track` slides left by exactly one group-width, looping seamlessly. */
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  animation: marquee-scroll 24s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float-organic,
+  .float-organic-shadow {
+    animation: none;
+  }
+  .reveal-on-scroll {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .marquee-track {
+    animation: none;
+    flex-wrap: wrap;
+    width: auto;
+  }
+  .marquee-track .marquee-group:nth-child(2) {
+    display: none;
+  }
 }

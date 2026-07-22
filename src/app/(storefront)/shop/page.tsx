@@ -17,6 +17,7 @@ export default async function ShopPage({
     getCartMap(),
   ]);
   const activeCategory = categories.find((c) => c.slug === category);
+  const categoryMap = Object.fromEntries(categories.map((c) => [c.id, c.slug]));
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 pb-24 md:pb-8">
@@ -82,7 +83,12 @@ export default async function ShopPage({
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} cart={cart} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              cart={cart}
+              categorySlug={categoryMap[product.categoryId]}
+            />
           ))}
         </div>
       )}

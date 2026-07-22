@@ -1,8 +1,11 @@
 import Image from "next/image";
 import { getDb } from "@/lib/db";
 import { getCartMap } from "@/lib/cart";
-import { CategoryCard } from "@/components/storefront/CategoryCard";
+import { CategoryShowcase } from "@/components/storefront/CategoryShowcase";
+import { BrandMarquee } from "@/components/storefront/BrandMarquee";
 import { ProductCarousel } from "@/components/storefront/ProductCarousel";
+import { HeroMedia } from "@/components/storefront/HeroMedia";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { ButtonLink } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
@@ -21,28 +24,51 @@ const COMMUNITY_POINTS = [
   "WhatsApp support to ask questions before you buy, not after",
 ];
 
+const HOW_IT_WORKS = [
+  {
+    step: "01",
+    icon: "🔍",
+    title: "Pick what your field needs",
+    detail: "Browse seeds, fertilizers, crop protection and tools by category or search — real prices and stock, always up to date.",
+  },
+  {
+    step: "02",
+    icon: "🛒",
+    title: "Order in minutes, no account needed",
+    detail: "Add to cart and check out as a guest with just your name, phone and delivery address. No app to install, nothing to pay upfront.",
+  },
+  {
+    step: "03",
+    icon: "📦",
+    title: "We pack it with care",
+    detail: "Every order is checked and packed by hand — genuine, licensed products only, never substituted without telling you.",
+  },
+  {
+    step: "04",
+    icon: "🚚",
+    title: "Delivered to your doorstep, pay on arrival",
+    detail: "Cash on delivery, even in villages regular couriers skip. Track your order's status any time from the Orders tab.",
+  },
+];
+
 export default async function HomePage() {
   const db = getDb();
   const [categories, products, cart] = await Promise.all([db.categories.list(), db.products.list(), getCartMap()]);
   const featured = products.slice(0, 8);
+  const categoryMap = Object.fromEntries(categories.map((c) => [c.id, c.slug]));
+  const brands = products.map((p) => p.brand);
+  const hasEnoughBrandsForMarquee = new Set(brands).size >= 3;
 
   return (
     <div className="pb-8 md:pb-0">
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src="/images/hero-sunrise-paddy.jpg"
-            alt="Sunrise over a paddy field"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-950/85 via-primary-900/70 to-primary-800/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-primary-950/70 via-transparent to-transparent" />
-        </div>
+        <HeroMedia
+          posterSrc="/images/hero-sunrise-paddy.jpg"
+          posterAlt="Sunrise over a paddy field"
+          videoSrc="/videos/hero-farm.mp4"
+        />
 
-        <div className="relative mx-auto max-w-6xl px-4 py-16 md:py-24 flex flex-col gap-5 md:max-w-xl">
+        <div className="relative px-4 sm:px-8 lg:px-16 py-16 md:py-24 flex flex-col gap-5 max-w-xl">
           <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium tracking-wide text-white">
             🌾 Built for the farmer, not the middleman
           </span>
@@ -62,16 +88,19 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-          {categories.map((category) => (
-            <CategoryCard key={category.id} category={category} />
-          ))}
-        </div>
-      </section>
+      {hasEnoughBrandsForMarquee && (
+        <section className="py-6 border-b border-border">
+          <ScrollReveal className="mx-auto max-w-6xl px-4 flex flex-col gap-3">
+            <span className="text-center text-xs font-medium text-muted uppercase tracking-wide">
+              Genuine products from brands you already trust
+            </span>
+            <BrandMarquee brands={brands} />
+          </ScrollReveal>
+        </section>
+      )}
 
       <section className="mx-auto max-w-6xl px-4 py-6">
-        <div className="flex items-end justify-between mb-5">
+        <ScrollReveal className="flex items-end justify-between mb-5">
           <div>
             <h2 className="font-display font-bold text-xl text-foreground">Popular right now</h2>
             <p className="text-sm text-muted mt-0.5">Handpicked essentials for this season</p>
@@ -79,13 +108,21 @@ export default async function HomePage() {
           <ButtonLink href="/shop" variant="ghost" size="sm">
             View all →
           </ButtonLink>
-        </div>
-        <ProductCarousel products={featured} cart={cart} />
+        </ScrollReveal>
+        <ProductCarousel products={featured} cart={cart} categoryMap={categoryMap} />
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-6">
+        <ScrollReveal className="mb-5">
+          <h2 className="font-display font-bold text-xl text-foreground">Shop by category</h2>
+          <p className="text-sm text-muted mt-0.5">Everything organised the way your field work is</p>
+        </ScrollReveal>
+        <CategoryShowcase categories={categories} />
       </section>
 
       <section className="py-14 bg-primary-50/60">
         <div className="mx-auto max-w-6xl px-4 grid md:grid-cols-2 gap-10 items-center">
-          <div className="flex flex-col gap-4 order-2 md:order-1">
+          <ScrollReveal className="flex flex-col gap-4 order-2 md:order-1">
             <span className="text-xs font-semibold tracking-wide uppercase text-primary-700">Our promise to you</span>
             <h2 className="font-display font-bold text-3xl leading-snug text-foreground">
               A Square Farmer Promise
@@ -107,25 +144,61 @@ export default async function HomePage() {
             <ButtonLink href="/shop" variant="accent" size="md" className="w-fit mt-2">
               Explore the catalog
             </ButtonLink>
-          </div>
+          </ScrollReveal>
 
-          <div
-            className="relative h-72 md:h-96 order-1 md:order-2 overflow-hidden"
-            style={{ borderRadius: "63% 37% 54% 46% / 43% 47% 53% 57%" }}
-          >
-            <Image
-              src="/images/trust-farmers-field.jpg"
-              alt="Farmers working together in a field"
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
+          <ScrollReveal delayMs={120} className="relative h-72 md:h-96 order-1 md:order-2">
+            <div
+              aria-hidden
+              className="float-organic-shadow absolute inset-4 md:inset-6 bg-primary-400/30 blur-2xl"
+              style={{ borderRadius: "63% 37% 54% 46% / 43% 47% 53% 57%" }}
             />
-          </div>
+            <div
+              className="float-organic relative h-full w-full overflow-hidden shadow-card-hover"
+              style={{ borderRadius: "63% 37% 54% 46% / 43% 47% 53% 57%" }}
+            >
+              <Image
+                src="/images/trust-farmers-field-v2.jpg"
+                alt="Farmers harvesting vegetables together in a field"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+              />
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-14">
+        <ScrollReveal className="text-center max-w-xl mx-auto mb-10">
+          <span className="text-xs font-semibold tracking-wide uppercase text-primary-700">How it works</span>
+          <h2 className="font-display font-bold text-3xl leading-snug text-foreground mt-2">
+            From your cart to your courtyard
+          </h2>
+          <p className="text-muted text-[15px] leading-relaxed mt-2">
+            No account, no upfront payment, no guessing when your order will arrive.
+          </p>
+        </ScrollReveal>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {HOW_IT_WORKS.map((item, i) => (
+            <ScrollReveal
+              key={item.step}
+              delayMs={i * 100}
+              className="relative flex flex-col gap-2 rounded-card border border-border bg-surface p-5"
+            >
+              <span className="absolute top-4 right-4 font-display font-extrabold text-2xl text-primary-100">
+                {item.step}
+              </span>
+              <span className="text-2xl">{item.icon}</span>
+              <h3 className="font-display font-semibold text-[15px] text-foreground mt-1">{item.title}</h3>
+              <p className="text-xs text-muted leading-relaxed">{item.detail}</p>
+            </ScrollReveal>
+          ))}
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <ScrollReveal className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {TRUST_BADGES.map((badge) => (
             <div key={badge.label} className="flex flex-col items-center text-center gap-1.5 rounded-card border border-border bg-surface p-5">
               <span className="text-2xl">{badge.icon}</span>
@@ -133,7 +206,7 @@ export default async function HomePage() {
               <span className="text-xs text-muted leading-snug">{badge.detail}</span>
             </div>
           ))}
-        </div>
+        </ScrollReveal>
       </section>
     </div>
   );

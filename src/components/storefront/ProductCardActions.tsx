@@ -11,6 +11,18 @@ const CART_ICON = (
   </svg>
 );
 
+const MINUS_ICON = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <path d="M5 12h14" strokeLinecap="round" />
+  </svg>
+);
+
+const PLUS_ICON = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+  </svg>
+);
+
 function lowestPricedVariant(variants: ProductVariant[]) {
   return [...variants].sort((a, b) => a.price - b.price)[0];
 }
@@ -45,9 +57,9 @@ export function ProductCardActions({ variants, cart }: ProductCardActionsProps) 
   }
 
   return (
-    <div className="flex flex-col gap-2.5" onClick={stop}>
+    <div className="flex flex-col gap-1.5 sm:gap-2.5" onClick={stop}>
       {variants.length > 1 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 min-h-[1.625rem]">
           {variants.map((v) => (
             <button
               key={v.id}
@@ -56,7 +68,7 @@ export function ProductCardActions({ variants, cart }: ProductCardActionsProps) 
                 stop(e);
                 setSelectedId(v.id);
               }}
-              className={`rounded-full px-2.5 py-1 text-[11px] font-medium border transition-colors ${
+              className={`rounded-full px-2.5 py-1 text-[11px] font-medium border transition-all active:scale-95 ${
                 v.id === selected.id
                   ? "bg-primary-700 text-white border-primary-700"
                   : "bg-surface text-foreground border-border hover:border-primary-300"
@@ -82,13 +94,13 @@ export function ProductCardActions({ variants, cart }: ProductCardActionsProps) 
             add();
           }}
           disabled={isPending}
-          className="flex h-10 items-center justify-center gap-2 rounded-full bg-primary-700 text-white text-xs font-bold uppercase tracking-wide hover:bg-primary-800 active:bg-primary-900 transition-colors disabled:opacity-60"
+          className="flex h-10 items-center justify-center gap-2 rounded-full bg-primary-700 text-white text-xs font-bold uppercase tracking-wide shadow-sm hover:bg-primary-800 hover:shadow-card active:bg-primary-900 active:scale-[0.98] transition-all disabled:opacity-60 disabled:active:scale-100"
         >
           {CART_ICON}
           Add to cart
         </button>
       ) : (
-        <div className="flex h-10 items-center justify-between rounded-full bg-primary-700 text-white px-1">
+        <div className="flex h-10 items-center justify-between rounded-full bg-primary-700 text-white shadow-sm px-1">
           <button
             type="button"
             onClick={(e) => {
@@ -97,11 +109,11 @@ export function ProductCardActions({ variants, cart }: ProductCardActionsProps) 
             }}
             disabled={isPending}
             aria-label="Decrease quantity"
-            className="flex h-8 w-9 items-center justify-center text-lg disabled:opacity-60"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-primary-800 active:scale-90 transition-all disabled:opacity-60 disabled:active:scale-100"
           >
-            −
+            {MINUS_ICON}
           </button>
-          <span className="text-sm font-semibold">{quantity}</span>
+          <span className="flex-1 text-center text-sm font-semibold tabular-nums">{quantity}</span>
           <button
             type="button"
             onClick={(e) => {
@@ -110,9 +122,9 @@ export function ProductCardActions({ variants, cart }: ProductCardActionsProps) 
             }}
             disabled={isPending}
             aria-label="Increase quantity"
-            className="flex h-8 w-9 items-center justify-center text-lg disabled:opacity-60"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-primary-800 active:scale-90 transition-all disabled:opacity-60 disabled:active:scale-100"
           >
-            +
+            {PLUS_ICON}
           </button>
         </div>
       )}

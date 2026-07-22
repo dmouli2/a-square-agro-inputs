@@ -2,16 +2,26 @@ import Link from "next/link";
 import Image from "next/image";
 import type { ProductWithVariants } from "@/types";
 import { getImageStorage } from "@/lib/storage";
+import { getCategoryFallbackImage } from "@/lib/categoryImages";
 import { ProductCardActions } from "./ProductCardActions";
 
-export function ProductCard({ product, cart = {} }: { product: ProductWithVariants; cart?: Record<string, number> }) {
+export function ProductCard({
+  product,
+  cart = {},
+  categorySlug,
+}: {
+  product: ProductWithVariants;
+  cart?: Record<string, number>;
+  categorySlug?: string;
+}) {
   const allOutOfStock = product.variants.every((v) => v.stockQty === 0);
   const imageUrl = product.images[0] ? getImageStorage().getPublicUrl(product.images[0]) : null;
+  const fallbackImage = getCategoryFallbackImage(categorySlug);
 
   return (
     <div className="group flex h-full flex-col rounded-card bg-surface border border-border overflow-hidden shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
       <Link href={`/product/${product.slug}`} className="block">
-        <div className="relative aspect-square bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center overflow-hidden">
+        <div className="relative aspect-[4/3] sm:aspect-square bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center overflow-hidden">
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -20,6 +30,20 @@ export function ProductCard({ product, cart = {} }: { product: ProductWithVarian
               sizes="(max-width: 768px) 50vw, 25vw"
               className="object-cover transition-transform duration-300 group-hover:scale-[1.06]"
             />
+          ) : fallbackImage ? (
+            <>
+              <Image
+                src={fallbackImage}
+                alt={product.name}
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover transition-transform duration-300 group-hover:scale-[1.06]"
+              />
+              <span className="absolute inset-0 bg-black/10" aria-hidden />
+              <span className="absolute bottom-2 left-2.5 rounded-full bg-black/55 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white tracking-wide">
+                Representative photo
+              </span>
+            </>
           ) : (
             <span className="font-display font-bold text-3xl text-primary-300 select-none">
               {product.brand.slice(0, 1)}
@@ -43,7 +67,7 @@ export function ProductCard({ product, cart = {} }: { product: ProductWithVarian
             )
           )}
         </div>
-        <div className="flex flex-col gap-1 p-3.5 pb-2 min-h-[5.25rem]">
+        <div className="flex flex-col gap-1 p-2.5 pb-1.5 sm:p-3.5 sm:pb-2 sm:min-h-[5.25rem]">
           <span className="text-xs font-medium text-muted uppercase tracking-wide">{product.brand}</span>
           <h3 className="font-display font-semibold text-[15px] leading-snug text-foreground line-clamp-2 group-hover:text-primary-700 transition-colors">
             {product.name}
@@ -51,7 +75,7 @@ export function ProductCard({ product, cart = {} }: { product: ProductWithVarian
         </div>
       </Link>
 
-      <div className="px-3.5 pb-3.5 mt-auto">
+      <div className="px-2.5 pb-2.5 sm:px-3.5 sm:pb-3.5 mt-auto">
         <ProductCardActions variants={product.variants} cart={cart} />
       </div>
     </div>

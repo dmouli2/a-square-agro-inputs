@@ -19,9 +19,11 @@ const CHEVRON_RIGHT = (
 interface ProductCarouselProps {
   products: ProductWithVariants[];
   cart?: Record<string, number>;
+  /** categoryId -> category slug, used to pick a fallback photo for products with no photo of their own. */
+  categoryMap?: Record<string, string>;
 }
 
-export function ProductCarousel({ products, cart = {} }: ProductCarouselProps) {
+export function ProductCarousel({ products, cart = {}, categoryMap = {} }: ProductCarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
@@ -54,15 +56,6 @@ export function ProductCarousel({ products, cart = {} }: ProductCarouselProps) {
   return (
     <div className="relative">
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 w-8 z-10 bg-gradient-to-r from-background to-transparent md:from-transparent"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-0 w-8 z-10 bg-gradient-to-l from-background to-transparent md:from-transparent"
-      />
-
-      <div
         ref={trackRef}
         className="no-scrollbar flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-1"
       >
@@ -71,7 +64,7 @@ export function ProductCarousel({ products, cart = {} }: ProductCarouselProps) {
             key={product.id}
             className="shrink-0 snap-start w-[72%] sm:w-[45%] md:w-[31%] lg:w-[23%]"
           >
-            <ProductCard product={product} cart={cart} />
+            <ProductCard product={product} cart={cart} categorySlug={categoryMap[product.categoryId]} />
           </div>
         ))}
       </div>

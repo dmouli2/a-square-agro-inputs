@@ -41,6 +41,7 @@ export default async function ProductDetailPage({
           imageUrls={product.images.map((path) => getImageStorage().getPublicUrl(path))}
           brandInitial={product.brand.slice(0, 1)}
           productName={product.name}
+          categorySlug={category?.slug}
         />
 
         <div className="flex flex-col gap-5">

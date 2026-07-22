@@ -44,10 +44,34 @@ function makeProduct(overrides: Partial<ProductWithVariants> = {}): ProductWithV
 }
 
 describe("ProductCard", () => {
-  it("shows a brand-initial placeholder when the product has no images", () => {
+  it("shows a brand-initial placeholder when the product has no images and no category is given", () => {
     render(<ProductCard product={makeProduct()} />);
     expect(screen.getByText("I")).toBeInTheDocument();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("shows a category fallback photo when the product has no images but a known category is given", () => {
+    render(<ProductCard product={makeProduct()} categorySlug="fertilizers" />);
+    expect(screen.queryByText("I")).not.toBeInTheDocument();
+    expect(screen.getByText("Representative photo")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Urea 50kg Bag" })).toHaveAttribute(
+      "src",
+      "/images/categories/fertilizers.jpg"
+    );
+  });
+
+  it("prefers the product's own photo over the category fallback when both are available", () => {
+    render(
+      <ProductCard
+        product={makeProduct({ images: ["products/urea.jpg"] })}
+        categorySlug="fertilizers"
+      />
+    );
+    expect(screen.queryByText("Representative photo")).not.toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Urea 50kg Bag" })).toHaveAttribute(
+      "src",
+      "https://cdn.example.com/products/urea.jpg"
+    );
   });
 
   it("renders the product photo when images are present", () => {

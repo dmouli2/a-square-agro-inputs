@@ -4,10 +4,23 @@ import userEvent from "@testing-library/user-event";
 import { ProductImageGallery } from "./ProductImageGallery";
 
 describe("ProductImageGallery", () => {
-  it("shows the brand-initial placeholder when there are no images", () => {
+  it("shows the brand-initial placeholder when there are no images and no known category", () => {
     render(<ProductImageGallery imageUrls={[]} brandInitial="I" productName="Urea" />);
     expect(screen.getByText("I")).toBeInTheDocument();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("shows a category fallback photo when there are no images but the category is known", () => {
+    render(<ProductImageGallery imageUrls={[]} brandInitial="I" productName="Urea" categorySlug="fertilizers" />);
+    expect(screen.queryByText("I")).not.toBeInTheDocument();
+    expect(screen.getByText(/Representative photo/)).toBeInTheDocument();
+    const img = screen.getByRole("img", { name: "Urea" });
+    expect(img).toHaveAttribute("src", "/images/categories/fertilizers.jpg");
+  });
+
+  it("falls back to the brand-initial placeholder for an unmapped category slug", () => {
+    render(<ProductImageGallery imageUrls={[]} brandInitial="I" productName="Urea" categorySlug="seasonal" />);
+    expect(screen.getByText("I")).toBeInTheDocument();
   });
 
   it("renders a single image without a thumbnail strip", () => {

@@ -81,6 +81,19 @@ describe("ShopPage", () => {
     expect(screen.getByText("1 product found", { exact: false })).toBeInTheDocument();
   });
 
+  it("resolves a category fallback photo for a product with no images of its own", async () => {
+    listProducts.mockResolvedValue([makeProduct({ images: [], categoryId: "cat-2" })]);
+
+    const jsx = await ShopPage({ searchParams: Promise.resolve({}) });
+    render(jsx);
+
+    expect(screen.getByText("Representative photo")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Hybrid Maize Seed" })).toHaveAttribute(
+      "src",
+      "/images/categories/fertilizers.jpg"
+    );
+  });
+
   it("shows the active category's description when set", async () => {
     listCategories.mockResolvedValue([makeCategory({ description: "Everything for a strong start." })]);
     listProducts.mockResolvedValue([]);

@@ -1,8 +1,18 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MobileTabBar } from "./MobileTabBar";
 
+const navState = vi.hoisted(() => ({ pathname: "/" }));
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => navState.pathname,
+}));
+
 describe("MobileTabBar", () => {
+  beforeEach(() => {
+    navState.pathname = "/";
+  });
+
   it("renders all four tabs linking to their routes", () => {
     render(<MobileTabBar />);
     expect(screen.getByRole("link", { name: /Home/ })).toHaveAttribute("href", "/");
@@ -23,5 +33,24 @@ describe("MobileTabBar", () => {
 
     const homeLink = screen.getByRole("link", { name: /Home/ });
     expect(homeLink.textContent).not.toContain("3");
+  });
+
+  it("marks Home active on / and no other tab", () => {
+    render(<MobileTabBar />);
+    expect(screen.getByRole("link", { name: /Home/ })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: /Shop/ })).not.toHaveAttribute("aria-current");
+  });
+
+  it("marks Shop active on /shop exactly, not on a nested product route", () => {
+    navState.pathname = "/shop";
+    render(<MobileTabBar />);
+    expect(screen.getByRole("link", { name: /Shop/ })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("marks Orders active on a nested order detail route", () => {
+    navState.pathname = "/orders/order-123";
+    render(<MobileTabBar />);
+    expect(screen.getByRole("link", { name: /Orders/ })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: /Home/ })).not.toHaveAttribute("aria-current");
   });
 });
