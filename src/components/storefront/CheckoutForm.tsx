@@ -1,47 +1,194 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, type FocusEvent } from "react";
 import { placeOrder, type CheckoutState } from "@/app/actions/checkout";
 import { Button } from "@/components/ui/Button";
 
 const initialState: CheckoutState = { error: null };
 
-const inputClass =
-  "h-11 rounded-control border border-border bg-surface px-3.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-500";
+const inr = (value: number) =>
+  value.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
-export function CheckoutForm() {
+/** Mirrors the server-side checks in src/app/actions/checkout.ts so a shopper sees a mistake
+ *  the moment they leave a field, instead of only after a round trip to the server. */
+function validateField(name: string, value: string): string | null {
+  const trimmed = value.trim();
+  switch (name) {
+    case "fullName":
+      return trimmed.length === 0 ? "Enter your full name." : null;
+    case "phone":
+      if (trimmed.length === 0) return "Enter your phone number.";
+      return /^[6-9]\d{9}$/.test(trimmed) ? null : "Enter a valid 10-digit phone number.";
+    case "line1":
+      return trimmed.length === 0 ? "Enter your house / street address." : null;
+    case "district":
+      return trimmed.length === 0 ? "Enter your district." : null;
+    case "state":
+      return trimmed.length === 0 ? "Enter your state." : null;
+    case "pincode":
+      if (trimmed.length === 0) return "Enter your pincode.";
+      return /^\d{6}$/.test(trimmed) ? null : "Enter a valid 6-digit pincode.";
+    default:
+      return null;
+  }
+}
+
+function fieldClass(hasError: boolean) {
+  return `h-11 w-full rounded-control border bg-surface px-3.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 ${
+    hasError
+      ? "border-red-300 focus:ring-red-200 focus:border-red-500"
+      : "border-border focus:ring-primary-300 focus:border-primary-500"
+  }`;
+}
+
+interface FieldProps {
+  name: string;
+  label: string;
+  placeholder?: string;
+  type?: string;
+  inputMode?: "text" | "tel" | "numeric" | "email";
+  maxLength?: number;
+  required?: boolean;
+  error?: string | null;
+  onBlur: (e: FocusEvent<HTMLInputElement>) => void;
+  className?: string;
+}
+
+function Field({ name, label, placeholder, type = "text", inputMode, maxLength, required, error, onBlur, className }: FieldProps) {
+  const inputId = `checkout-${name}`;
+  return (
+    <div className={className}>
+      <label htmlFor={inputId} className="block text-xs font-medium text-muted mb-1">
+        {label}
+        {!required && " (optional)"}
+      </label>
+      <input
+        id={inputId}
+        name={name}
+        type={type}
+        inputMode={inputMode}
+        maxLength={maxLength}
+        placeholder={placeholder}
+        required={required}
+        onBlur={onBlur}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${inputId}-error` : undefined}
+        className={fieldClass(Boolean(error))}
+      />
+      {error && (
+        <p id={`${inputId}-error`} className="mt-1 text-xs text-red-600">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function CheckoutForm({ subtotal }: { subtotal: number }) {
   const [state, formAction, isPending] = useActionState(placeOrder, initialState);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [clientErrors, setClientErrors] = useState<Record<string, string | null>>({});
+
+  function handleBlur(e: FocusEvent<HTMLInputElement>) {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    setClientErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
+  }
+
+  function errorFor(name: string): string | null {
+    if (touched[name]) return clientErrors[name] ?? null;
+    return state.fieldErrors?.[name] ?? null;
+  }
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
-      <h2 className="font-display font-bold text-lg text-foreground">Delivery details</h2>
+    <form action={formAction} className="flex flex-col gap-6">
+      <section className="rounded-card border border-border bg-surface p-4 flex flex-col gap-4">
+        <h2 className="font-display font-bold text-lg text-foreground flex items-center gap-2">
+          <span aria-hidden>📍</span> Delivery details
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <Field name="fullName" label="Full name" placeholder="e.g. Ravi Kumar" required error={errorFor("fullName")} onBlur={handleBlur} className="sm:col-span-2" />
+          <Field
+            name="phone"
+            label="Phone number"
+            placeholder="10-digit mobile number"
+            type="tel"
+            inputMode="tel"
+            maxLength={10}
+            required
+            error={errorFor("phone")}
+            onBlur={handleBlur}
+            className="sm:col-span-2"
+          />
+          <Field name="email" label="Email" placeholder="you@example.com" type="email" error={errorFor("email")} onBlur={handleBlur} className="sm:col-span-2" />
+        </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <input name="fullName" placeholder="Full name" required className={`${inputClass} col-span-2`} />
-        <input name="phone" type="tel" placeholder="Phone number" required className={`${inputClass} col-span-2`} />
-        <input name="email" type="email" placeholder="Email (optional)" className={`${inputClass} col-span-2`} />
-        <input name="line1" placeholder="House / street" required className={`${inputClass} col-span-2`} />
-        <input name="line2" placeholder="Landmark (optional)" className={`${inputClass} col-span-2`} />
-        <input name="village" placeholder="Village / town" className={`${inputClass} col-span-2`} />
-        <input name="district" placeholder="District" required className={inputClass} />
-        <input name="state" placeholder="State" required className={inputClass} />
-        <input name="pincode" placeholder="Pincode" required className={inputClass} />
-      </div>
+        <div className="border-t border-border pt-4 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <Field name="line1" label="House / street" placeholder="House no., street name" required error={errorFor("line1")} onBlur={handleBlur} className="sm:col-span-2" />
+          <Field name="line2" label="Landmark" placeholder="Near the water tank, etc." error={errorFor("line2")} onBlur={handleBlur} className="sm:col-span-2" />
+          <Field name="village" label="Village / town" error={errorFor("village")} onBlur={handleBlur} className="sm:col-span-2" />
+          <Field name="district" label="District" required error={errorFor("district")} onBlur={handleBlur} />
+          <Field name="state" label="State" required error={errorFor("state")} onBlur={handleBlur} />
+          <Field
+            name="pincode"
+            label="Pincode"
+            inputMode="numeric"
+            maxLength={6}
+            required
+            error={errorFor("pincode")}
+            onBlur={handleBlur}
+            className="sm:col-span-2"
+          />
+        </div>
+      </section>
 
-      <div className="rounded-card bg-primary-50/60 border border-primary-100 p-3.5 text-sm text-primary-800 flex items-center gap-2">
-        <span>💰</span>
-        <span>Cash on Delivery — pay when your order arrives.</span>
+      <section className="rounded-card border border-border bg-surface p-4 flex flex-col gap-2">
+        <h2 className="font-display font-bold text-lg text-foreground flex items-center gap-2 mb-1">
+          <span aria-hidden>🧾</span> Order summary
+        </h2>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted">Subtotal</span>
+          <span className="text-foreground">{inr(subtotal)}</span>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted">Delivery</span>
+          <span className="text-primary-700 font-medium">Free</span>
+        </div>
+        <div className="border-t border-border mt-1 pt-2 flex items-center justify-between">
+          <span className="font-medium text-foreground">Total</span>
+          <span className="font-display font-bold text-lg text-foreground">{inr(subtotal)}</span>
+        </div>
+      </section>
+
+      <div className="flex flex-col gap-2 text-sm text-muted">
+        <p className="flex items-center gap-2">
+          <span aria-hidden>💰</span> Cash on Delivery — pay when it arrives.
+        </p>
+        <p className="flex items-center gap-2">
+          <span aria-hidden>🚚</span> Doorstep delivery, even to your village.
+        </p>
+        <p className="flex items-center gap-2">
+          <span aria-hidden>🔒</span> Your details are only used to deliver this order.
+        </p>
       </div>
 
       {state.error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-control px-3.5 py-2.5">
+        <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-control px-3.5 py-2.5">
           {state.error}
         </p>
       )}
 
-      <Button type="submit" size="lg" disabled={isPending} className="w-full">
-        {isPending ? "Placing order…" : "Place order (Cash on Delivery)"}
-      </Button>
+      <div className="fixed bottom-16 inset-x-0 z-30 border-t border-border bg-surface/95 backdrop-blur px-4 py-3 md:static md:z-auto md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+        <div className="mx-auto max-w-2xl flex items-center gap-3 md:block">
+          <span className="flex-1 md:hidden">
+            <span className="block text-xs text-muted">Total</span>
+            <span className="block font-display font-bold text-foreground">{inr(subtotal)}</span>
+          </span>
+          <Button type="submit" size="lg" disabled={isPending} className="w-full md:w-full">
+            {isPending ? "Placing order…" : `Place order (Cash on Delivery)`}
+          </Button>
+        </div>
+      </div>
     </form>
   );
 }

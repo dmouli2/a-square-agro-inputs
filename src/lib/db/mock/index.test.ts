@@ -289,6 +289,66 @@ describe("createMockDb", () => {
     });
   });
 
+  describe("rateLimiter", () => {
+    it("allows and records attempts under both the ip and phone limits", async () => {
+      const db = createMockDb();
+      const result = await db.rateLimiter.checkAndRecord({ ip: "1.2.3.4", phone: "9876543210" });
+      expect(result).toEqual({ allowed: true });
+    });
+
+    it("blocks once the per-phone limit is reached, even from different ips", async () => {
+      const db = createMockDb();
+      for (let i = 0; i < 5; i++) {
+        await db.rateLimiter.checkAndRecord({ ip: `1.2.3.${i}`, phone: "9876543210" });
+      }
+      const result = await db.rateLimiter.checkAndRecord({ ip: "1.2.3.99", phone: "9876543210" });
+      expect(result.allowed).toBe(false);
+      expect(result.retryAfterSeconds).toBeGreaterThan(0);
+    });
+
+    it("blocks once the per-ip limit is reached, even with different phones", async () => {
+      const db = createMockDb();
+      for (let i = 0; i < 8; i++) {
+        await db.rateLimiter.checkAndRecord({ ip: "1.2.3.4", phone: `900000000${i}` });
+      }
+      const result = await db.rateLimiter.checkAndRecord({ ip: "1.2.3.4", phone: "9111111111" });
+      expect(result.allowed).toBe(false);
+    });
+
+    it("expires old attempts outside the sliding window", async () => {
+      vi.useFakeTimers();
+      const db = createMockDb();
+      vi.setSystemTime(new Date("2026-07-01T00:00:00.000Z"));
+      for (let i = 0; i < 5; i++) {
+        await db.rateLimiter.checkAndRecord({ ip: "1.2.3.4", phone: "9876543210" });
+      }
+      vi.setSystemTime(new Date("2026-07-01T00:11:00.000Z")); // 11 minutes later — past the 10-minute window
+      const result = await db.rateLimiter.checkAndRecord({ ip: "1.2.3.4", phone: "9876543210" });
+      vi.useRealTimers();
+      expect(result).toEqual({ allowed: true });
+    });
+  });
+
+  describe("errorLogs", () => {
+    it("create then list returns the entry, newest first, with a generated id", async () => {
+      const db = createMockDb();
+      await db.errorLogs.create({ message: "first" });
+      await db.errorLogs.create({ message: "second", stack: "at x", path: "/cart", context: { a: 1 } });
+
+      const logs = await db.errorLogs.list();
+      expect(logs[0]).toMatchObject({ message: "second", stack: "at x", path: "/cart", context: { a: 1 } });
+      expect(logs[0].id).toMatch(/^ERR-/);
+      expect(logs[1].message).toBe("first");
+    });
+
+    it("list respects a custom limit", async () => {
+      const db = createMockDb();
+      await db.errorLogs.create({ message: "a" });
+      await db.errorLogs.create({ message: "b" });
+      expect(await db.errorLogs.list(1)).toHaveLength(1);
+    });
+  });
+
   it("resetMockOrders wipes accumulated state so each test starts fresh", async () => {
     const db = createMockDb();
     await db.orders.create(baseOrderInput);

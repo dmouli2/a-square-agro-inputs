@@ -4,11 +4,15 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/db";
+import { getClientIp } from "@/lib/net";
+import { logError } from "@/lib/errorLog";
 import { CART_COOKIE, getCartMap } from "@/lib/cart";
 import { PHONE_COOKIE, PHONE_COOKIE_MAX_AGE, isValidPhone } from "@/lib/orderLookup";
 
 export interface CheckoutState {
   error: string | null;
+  /** Per-field messages so the form can highlight exactly what needs fixing. */
+  fieldErrors?: Record<string, string>;
 }
 
 function requiredField(formData: FormData, name: string): string | null {
@@ -31,14 +35,31 @@ export async function placeOrder(_prevState: CheckoutState, formData: FormData):
   const state = requiredField(formData, "state");
   const pincode = requiredField(formData, "pincode");
 
-  if (!fullName || !phone || !line1 || !district || !state || !pincode) {
-    return { error: "Please fill in your name, phone, address, district, state and pincode." };
+  const fieldErrors: Record<string, string> = {};
+  if (!fullName) fieldErrors.fullName = "Enter your full name.";
+  if (!phone) fieldErrors.phone = "Enter your phone number.";
+  else if (!isValidPhone(phone)) fieldErrors.phone = "Enter a valid 10-digit phone number.";
+  if (!line1) fieldErrors.line1 = "Enter your house / street address.";
+  if (!district) fieldErrors.district = "Enter your district.";
+  if (!state) fieldErrors.state = "Enter your state.";
+  if (!pincode) fieldErrors.pincode = "Enter your pincode.";
+  else if (!/^\d{6}$/.test(pincode)) fieldErrors.pincode = "Enter a valid 6-digit pincode.";
+
+  if (Object.keys(fieldErrors).length > 0) {
+    return { error: "Please fix the highlighted fields below.", fieldErrors };
   }
-  if (!isValidPhone(phone)) {
-    return { error: "Please enter a valid 10-digit phone number." };
-  }
-  if (!/^\d{6}$/.test(pincode)) {
-    return { error: "Please enter a valid 6-digit pincode." };
+  // Every field above is confirmed non-null by the fieldErrors check just above.
+  const validFullName = fullName as string;
+  const validPhone = phone as string;
+  const validLine1 = line1 as string;
+  const validDistrict = district as string;
+  const validState = state as string;
+  const validPincode = pincode as string;
+
+  const ip = await getClientIp();
+  const rateLimit = await getDb().rateLimiter.checkAndRecord({ ip, phone: validPhone });
+  if (!rateLimit.allowed) {
+    return { error: "Too many order attempts from this number/network. Please wait a few minutes and try again." };
   }
 
   const email = requiredField(formData, "email") ?? undefined;
@@ -48,8 +69,17 @@ export async function placeOrder(_prevState: CheckoutState, formData: FormData):
   let orderId: string;
   try {
     const order = await getDb().orders.create({
-      customer: { fullName, phone, email },
-      address: { fullName, phone, line1, line2, village, district, state, pincode },
+      customer: { fullName: validFullName, phone: validPhone, email },
+      address: {
+        fullName: validFullName,
+        phone: validPhone,
+        line1: validLine1,
+        line2,
+        village,
+        district: validDistrict,
+        state: validState,
+        pincode: validPincode,
+      },
       items,
     });
     orderId = order.id;
@@ -58,10 +88,14 @@ export async function placeOrder(_prevState: CheckoutState, formData: FormData):
     // stale/out-of-stock cart items (see orderRepository.create) — surface
     // that instead of a generic failure so the shopper knows to adjust
     // quantities rather than just retrying the same order.
-    const message =
-      err instanceof Error && (err.message.includes("no longer available") || err.message.includes("exceed available stock"))
-        ? err.message
-        : "Something went wrong placing your order. Please try again.";
+    const isKnownMessage =
+      err instanceof Error && (err.message.includes("no longer available") || err.message.includes("exceed available stock"));
+    if (!isKnownMessage) {
+      await logError(err, "/cart", { stage: "placeOrder" });
+    }
+    const message = isKnownMessage
+      ? (err as Error).message
+      : "Something went wrong placing your order. Please try again.";
     return { error: message };
   }
 
@@ -69,7 +103,7 @@ export async function placeOrder(_prevState: CheckoutState, formData: FormData):
   store.delete(CART_COOKIE);
   // Remember the phone so /orders can show this customer's history without
   // asking again. httpOnly: only server pages need it, no client JS does.
-  store.set(PHONE_COOKIE, phone, {
+  store.set(PHONE_COOKIE, validPhone, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",

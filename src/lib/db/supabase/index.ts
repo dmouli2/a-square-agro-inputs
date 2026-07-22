@@ -5,6 +5,8 @@ import { createSupabaseProductRepository } from "./productRepository";
 import { createSupabaseOrderRepository } from "./orderRepository";
 import { createSupabaseStaffRepository } from "./staffRepository";
 import { createSupabaseCustomerRepository } from "./customerRepository";
+import { createSupabaseRateLimiterRepository } from "./rateLimitRepository";
+import { createSupabaseErrorLogRepository } from "./errorLogRepository";
 
 export function createSupabaseDb(): Database {
   const mock = createMockDb();
@@ -15,5 +17,7 @@ export function createSupabaseDb(): Database {
     coupons: mock.coupons,
     staff: createSupabaseStaffRepository(),
     customers: createSupabaseCustomerRepository(),
+    rateLimiter: createSupabaseRateLimiterRepository(),
+    errorLogs: createSupabaseErrorLogRepository(),
   };
 }

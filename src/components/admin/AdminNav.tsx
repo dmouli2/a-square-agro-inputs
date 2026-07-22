@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/admin/categories", label: "Categories", icon: "🗂️", exact: false },
   { href: "/admin/orders", label: "Orders", icon: "📦", exact: false },
   { href: "/admin/customers", label: "Customers", icon: "👥", exact: false },
+  { href: "/admin/errors", label: "Errors", icon: "🛠️", exact: false },
 ];
 
 function isActive(pathname: string, href: string, exact: boolean) {

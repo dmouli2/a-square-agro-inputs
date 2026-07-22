@@ -152,3 +152,19 @@ export interface Coupon {
   expiresAt?: string;
   active: boolean;
 }
+
+/** A server-side error caught by an action or an error boundary, kept for the admin diagnostics view. */
+export interface ErrorLogEntry {
+  id: string;
+  message: string;
+  stack?: string;
+  context?: Record<string, unknown>;
+  path?: string;
+  createdAt: string;
+}
+
+export interface RateLimitResult {
+  allowed: boolean;
+  /** Present only when `allowed` is false — how long until the caller may retry. */
+  retryAfterSeconds?: number;
+}

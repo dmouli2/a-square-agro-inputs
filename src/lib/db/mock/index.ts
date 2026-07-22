@@ -1,19 +1,39 @@
 import bcrypt from "bcryptjs";
 import type { Database } from "@/lib/db/types";
+import { RATE_LIMIT_MAX_PER_IP, RATE_LIMIT_MAX_PER_PHONE, RATE_LIMIT_WINDOW_SECONDS } from "@/lib/db/rateLimitConfig";
 import { CATEGORIES, PRODUCTS } from "@/lib/mock-data";
-import type { Address, Category, Customer, CustomerSummary, Order, OrderItem, ProductWithVariants, Staff } from "@/types";
+import type {
+  Address,
+  Category,
+  Customer,
+  CustomerSummary,
+  ErrorLogEntry,
+  Order,
+  OrderItem,
+  ProductWithVariants,
+  Staff,
+} from "@/types";
+
+interface CheckoutAttempt {
+  ip: string;
+  phone: string;
+  createdAt: number;
+}
 
 interface MockStore {
   categories: Category[];
   products: ProductWithVariants[];
   orders: Order[];
   customers: Customer[];
+  checkoutAttempts: CheckoutAttempt[];
+  errorLogs: ErrorLogEntry[];
   nextOrderId: number;
   nextCustomerId: number;
   nextAddressId: number;
   nextProductId: number;
   nextVariantId: number;
   nextCategoryId: number;
+  nextErrorLogId: number;
 }
 
 const MOCK_STAFF: Staff[] = [
@@ -40,12 +60,15 @@ function getStore(): MockStore {
       products: PRODUCTS.map((p) => ({ ...p, variants: p.variants.map((v) => ({ ...v })) })),
       orders: [],
       customers: [],
+      checkoutAttempts: [],
+      errorLogs: [],
       nextOrderId: 1,
       nextCustomerId: 1,
       nextAddressId: 1,
       nextProductId: 1,
       nextVariantId: 1,
       nextCategoryId: 1,
+      nextErrorLogId: 1,
     };
   }
   return g.__a2MockStore;
@@ -276,6 +299,36 @@ export function createMockDb(): Database {
             };
           })
           .sort((a, b) => (b.lastOrderAt ?? "").localeCompare(a.lastOrderAt ?? ""));
+      },
+    },
+    rateLimiter: {
+      async checkAndRecord({ ip, phone }) {
+        const store = getStore();
+        const cutoff = Date.now() - RATE_LIMIT_WINDOW_SECONDS * 1000;
+        store.checkoutAttempts = store.checkoutAttempts.filter((a) => a.createdAt >= cutoff);
+
+        const ipCount = store.checkoutAttempts.filter((a) => a.ip === ip).length;
+        const phoneCount = store.checkoutAttempts.filter((a) => a.phone === phone).length;
+        const allowed = ipCount < RATE_LIMIT_MAX_PER_IP && phoneCount < RATE_LIMIT_MAX_PER_PHONE;
+
+        store.checkoutAttempts.push({ ip, phone, createdAt: Date.now() });
+        return allowed ? { allowed: true } : { allowed: false, retryAfterSeconds: RATE_LIMIT_WINDOW_SECONDS };
+      },
+    },
+    errorLogs: {
+      async create(entry) {
+        const store = getStore();
+        store.errorLogs.unshift({
+          id: `ERR-${store.nextErrorLogId++}`,
+          message: entry.message,
+          stack: entry.stack,
+          context: entry.context,
+          path: entry.path,
+          createdAt: new Date().toISOString(),
+        });
+      },
+      async list(limit = 100) {
+        return getStore().errorLogs.slice(0, limit);
       },
     },
   };

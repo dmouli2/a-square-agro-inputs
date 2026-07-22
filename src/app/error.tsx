@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Logo } from "@/components/storefront/Logo";
 import { Button } from "@/components/ui/Button";
+import { reportClientError } from "@/app/actions/errorLog";
 
 export default function RootError({
   error,
@@ -11,8 +13,12 @@ export default function RootError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const pathname = usePathname();
+
   useEffect(() => {
     console.error(error);
+    reportClientError(error.message, error.stack, pathname).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [error]);
 
   return (

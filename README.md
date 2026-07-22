@@ -55,6 +55,21 @@ Ports-and-adapters, same discipline as the team's other Next.js/Supabase project
   and `staff` (bcrypt + JWT session, not Supabase Auth). RLS: public read on active
   products/categories; everything else is service-role-only — there's no logged-in customer
   session to scope policies to, so all of it goes through Server Actions.
+- `supabase/migrations/0004_checkout_hygiene.sql` — `checkout_attempts` (backs
+  `RateLimiterRepository`, indexed on `(ip, created_at)` and `(phone, created_at)` for the
+  sliding-window count) and `error_logs` (backs `ErrorLogRepository`), both service-role-only
+  like every other table here. `placeOrder` (`src/app/actions/checkout.ts`) calls
+  `getDb().rateLimiter.checkAndRecord({ ip, phone })` — `src/lib/net.ts`'s `getClientIp()` reads
+  `x-forwarded-for` — before creating the order, capped at 5 attempts/10 min per phone and 8/10
+  min per ip (looser on ip since rural mobile networks commonly NAT many customers behind one
+  carrier IP); the Supabase adapter fails open (allows the request) if the rate-limit query
+  itself errors, so an infra hiccup there can't take down checkout for everyone. Unexpected
+  `placeOrder` failures (not the known stock/stale-cart messages, which are already
+  customer-actionable) get written to `error_logs` via `src/lib/errorLog.ts`'s `logError()`, and
+  both root error boundaries (`src/app/error.tsx`, `src/app/(storefront)/error.tsx`) forward their
+  caught error to the same table through the `reportClientError` Server Action (client components
+  can't import `getDb()` directly — that would bundle the service-role key into the browser).
+  Viewable at `/admin/errors`. No external service (Sentry etc.) — see "Engineering hygiene".
 - Auth has two layers, same split as the team's other project: `src/proxy.ts` only decrypts the
   session cookie for a fast, optimistic redirect on `/admin/*` — it never hits the database.
   `src/lib/dal.ts` (`requireRole(["admin"])`) does the real check on every admin page/Server
@@ -89,8 +104,12 @@ decorative) but reuses the same color/font tokens.
 - **Storefront**: home (real-photo hero banner, prominent search, "why farmers choose us"
   section), shop listing (category filters + text search via `?q=`), product detail (photo
   gallery with thumbnails, variant picker, crop compatibility, compliance info for regulated
-  agrochemicals), cart with a live quantity stepper, guest checkout (name/phone/address, COD
-  only, inline validation via `useActionState`), order confirmation page. The product page shows
+  agrochemicals), cart with a live quantity stepper, a redesigned guest checkout (sectioned
+  "Delivery details"/"Order summary" cards, live per-field inline validation on blur that mirrors
+  the server-side rules so a shopper sees a mistake immediately instead of after a round trip,
+  a sticky mobile total/submit bar above the tab bar, and trust badges reusing the homepage's
+  COD/doorstep-delivery copy — `src/components/storefront/CheckoutForm.tsx`), order confirmation
+  page. The product page shows
   "N in your cart → Go to cart" once an item's added, instead of letting you double-add the same
   variant. Product cards (`ProductCard` + `QuickAddButton`) have a hover-lift/zoom effect and a
   quick add-to-cart control (adds the lowest-priced variant, becomes a +/- stepper once in cart)
@@ -179,8 +198,12 @@ decorative) but reuses the same color/font tokens.
 - ~~No automated tests~~ **Done (2026-07-22):** full Vitest + RTL suite, coverage-gated at 90%
   (`npm run test:coverage`) — see `AGENTS.md` for the policy this repo now follows on every change.
 - CI/CD is **out of scope** (decided 2026-07-22) — deploys are deliberately manual `vercel --prod --yes`; don't re-propose pipelines.
-- No error monitoring (Sentry or similar).
-- No rate-limiting/bot protection on the checkout form (open to spam orders — no CAPTCHA/throttle).
+- ~~No error monitoring~~ **Done (2026-07-22), in-house table instead of Sentry by explicit
+  decision** (no new external account): `error_logs` + `ErrorLogRepository`, viewable at
+  `/admin/errors`. See the migration note above for exactly what's wired in.
+- ~~No rate-limiting/bot protection on the checkout form~~ **Done (2026-07-22):**
+  Supabase-backed sliding-window limiter on `placeOrder` (5 attempts/10 min per phone, 8/10 min
+  per ip), fails open on infra errors. See the migration note above.
 - Still on the `*.vercel.app` URL, no custom domain.
 
 ## How this was verified

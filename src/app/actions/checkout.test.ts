@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockCookieStore, mockRevalidatePath } from "../../../vitest.setup";
 import { getDb } from "@/lib/db";
+import { logError } from "@/lib/errorLog";
 import { CART_COOKIE } from "@/lib/cart";
 import { PHONE_COOKIE } from "@/lib/orderLookup";
 import { placeOrder } from "./checkout";
 
 vi.mock("@/lib/db", () => ({ getDb: vi.fn() }));
+vi.mock("@/lib/errorLog", () => ({ logError: vi.fn() }));
 
 function formData(fields: Record<string, string>): FormData {
   const fd = new FormData();
@@ -24,10 +26,13 @@ const validAddress = {
 
 describe("placeOrder", () => {
   const create = vi.fn();
+  const checkAndRecord = vi.fn();
 
   beforeEach(() => {
     create.mockReset();
-    vi.mocked(getDb).mockReturnValue({ orders: { create } } as never);
+    checkAndRecord.mockReset().mockResolvedValue({ allowed: true });
+    vi.mocked(getDb).mockReturnValue({ orders: { create }, rateLimiter: { checkAndRecord } } as never);
+    vi.mocked(logError).mockReset();
     mockCookieStore.set.mockClear();
     mockCookieStore.delete.mockClear();
     mockRevalidatePath.mockClear();
@@ -39,22 +44,45 @@ describe("placeOrder", () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it("rejects when required address fields are missing", async () => {
+  it("rejects when required address fields are missing, with a fieldErrors entry per missing field", async () => {
     mockCookieStore.set(CART_COOKIE, JSON.stringify({ v1: 1 }));
     const result = await placeOrder({ error: null }, formData({ fullName: "Ravi" }));
-    expect(result.error).toMatch(/fill in your name/i);
+    expect(result.error).toMatch(/fix the highlighted fields/i);
+    expect(result.fieldErrors).toEqual({
+      phone: "Enter your phone number.",
+      line1: "Enter your house / street address.",
+      district: "Enter your district.",
+      state: "Enter your state.",
+      pincode: "Enter your pincode.",
+    });
+    expect(checkAndRecord).not.toHaveBeenCalled();
   });
 
   it("rejects an invalid phone number", async () => {
     mockCookieStore.set(CART_COOKIE, JSON.stringify({ v1: 1 }));
     const result = await placeOrder({ error: null }, formData({ ...validAddress, phone: "12345" }));
-    expect(result.error).toMatch(/valid 10-digit phone number/i);
+    expect(result.fieldErrors?.phone).toMatch(/valid 10-digit phone number/i);
   });
 
   it("rejects an invalid pincode", async () => {
     mockCookieStore.set(CART_COOKIE, JSON.stringify({ v1: 1 }));
     const result = await placeOrder({ error: null }, formData({ ...validAddress, pincode: "123" }));
-    expect(result.error).toMatch(/valid 6-digit pincode/i);
+    expect(result.fieldErrors?.pincode).toMatch(/valid 6-digit pincode/i);
+  });
+
+  it("blocks the attempt when the rate limiter says no, without creating an order", async () => {
+    mockCookieStore.set(CART_COOKIE, JSON.stringify({ v1: 1 }));
+    checkAndRecord.mockResolvedValue({ allowed: false, retryAfterSeconds: 600 });
+    const result = await placeOrder({ error: null }, formData(validAddress));
+    expect(result.error).toMatch(/too many order attempts/i);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("passes the client ip and phone to the rate limiter", async () => {
+    mockCookieStore.set(CART_COOKIE, JSON.stringify({ v1: 1 }));
+    create.mockResolvedValue({ id: "ORD-1004" });
+    await placeOrder({ error: null }, formData(validAddress)).catch(() => {});
+    expect(checkAndRecord).toHaveBeenCalledWith({ ip: "unknown", phone: "9876543210" });
   });
 
   it("places the order, clears the cart, and redirects to the confirmation page on success", async () => {
@@ -103,31 +131,36 @@ describe("placeOrder", () => {
     );
   });
 
-  it("surfaces the repository's stock/availability error message to the shopper", async () => {
+  it("surfaces the repository's stock/availability error message to the shopper without logging it", async () => {
     mockCookieStore.set(CART_COOKIE, JSON.stringify({ v1: 5 }));
     create.mockRejectedValue(new Error("One or more items in your cart exceed available stock."));
     const result = await placeOrder({ error: null }, formData(validAddress));
     expect(result.error).toBe("One or more items in your cart exceed available stock.");
+    expect(logError).not.toHaveBeenCalled();
   });
 
-  it("surfaces the repository's stale-cart-item error message to the shopper", async () => {
+  it("surfaces the repository's stale-cart-item error message to the shopper without logging it", async () => {
     mockCookieStore.set(CART_COOKIE, JSON.stringify({ v1: 5 }));
     create.mockRejectedValue(new Error("One or more cart items are no longer available."));
     const result = await placeOrder({ error: null }, formData(validAddress));
     expect(result.error).toBe("One or more cart items are no longer available.");
+    expect(logError).not.toHaveBeenCalled();
   });
 
-  it("falls back to a generic error message for an unexpected failure", async () => {
+  it("falls back to a generic error message and logs the failure for an unexpected error", async () => {
     mockCookieStore.set(CART_COOKIE, JSON.stringify({ v1: 5 }));
-    create.mockRejectedValue(new Error("connection refused"));
+    const err = new Error("connection refused");
+    create.mockRejectedValue(err);
     const result = await placeOrder({ error: null }, formData(validAddress));
     expect(result.error).toBe("Something went wrong placing your order. Please try again.");
+    expect(logError).toHaveBeenCalledWith(err, "/cart", { stage: "placeOrder" });
   });
 
-  it("falls back to a generic error message for a non-Error rejection", async () => {
+  it("falls back to a generic error message and logs the failure for a non-Error rejection", async () => {
     mockCookieStore.set(CART_COOKIE, JSON.stringify({ v1: 5 }));
     create.mockRejectedValue("boom");
     const result = await placeOrder({ error: null }, formData(validAddress));
     expect(result.error).toBe("Something went wrong placing your order. Please try again.");
+    expect(logError).toHaveBeenCalledWith("boom", "/cart", { stage: "placeOrder" });
   });
 });

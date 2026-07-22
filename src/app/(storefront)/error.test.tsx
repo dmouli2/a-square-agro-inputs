@@ -1,10 +1,17 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { reportClientError } from "@/app/actions/errorLog";
 import StorefrontError from "./error";
 
+vi.mock("@/app/actions/errorLog", () => ({ reportClientError: vi.fn() }));
+
 describe("StorefrontError", () => {
-  it("logs the error and lets the user retry or go back to the shop", async () => {
+  beforeEach(() => {
+    vi.mocked(reportClientError).mockReset().mockResolvedValue(undefined);
+  });
+
+  it("logs the error, reports it for /admin/errors, and lets the user retry or go back to the shop", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const reset = vi.fn();
     const error = Object.assign(new Error("boom"), { digest: "xyz" });
@@ -12,6 +19,7 @@ describe("StorefrontError", () => {
     render(<StorefrontError error={error} reset={reset} />);
 
     expect(consoleSpy).toHaveBeenCalledWith(error);
+    expect(reportClientError).toHaveBeenCalledWith("boom", error.stack, "/");
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));

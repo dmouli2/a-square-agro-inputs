@@ -53,7 +53,7 @@ export default async function CartPage() {
   const subtotal = resolved.reduce((sum, item) => sum + item.variant.price * item.quantity, 0);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 pb-24 md:pb-8">
+    <div className="mx-auto max-w-2xl px-4 py-8 pb-40 md:pb-8">
       {staleVariantIds.length > 0 && <CartCleanup staleVariantIds={staleVariantIds} />}
       <h1 className="font-display font-bold text-2xl text-foreground mb-6">Your cart</h1>
 
@@ -71,14 +71,7 @@ export default async function CartPage() {
         ))}
       </div>
 
-      <div className="rounded-card border border-border bg-surface p-4 mb-6 flex items-center justify-between">
-        <span className="text-sm font-medium text-muted">Subtotal</span>
-        <span className="font-display font-bold text-lg text-foreground">
-          {subtotal.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 })}
-        </span>
-      </div>
-
-      <CheckoutForm />
+      <CheckoutForm subtotal={subtotal} />
     </div>
   );
 }

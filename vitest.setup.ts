@@ -40,8 +40,13 @@ export const mockCookieStore = {
   }),
 };
 
+export const mockHeadersStore = {
+  get: vi.fn((): string | null => null),
+};
+
 vi.mock("next/headers", () => ({
   cookies: vi.fn(async () => mockCookieStore),
+  headers: vi.fn(async () => mockHeadersStore),
 }));
 
 // ---- next/cache -----------------------------------------------------------
@@ -104,6 +109,8 @@ beforeEach(() => {
   mockCookieStore.delete.mockClear();
   cookieStoreValues.clear();
   mockRevalidatePath.mockClear();
+  mockHeadersStore.get.mockReset();
+  mockHeadersStore.get.mockReturnValue(null);
   if (typeof window !== "undefined") {
     window.localStorage.clear();
     window.sessionStorage.clear();

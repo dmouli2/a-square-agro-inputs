@@ -3,10 +3,12 @@ import type {
   Coupon,
   CreateOrderInput,
   CustomerSummary,
+  ErrorLogEntry,
   Order,
   Product,
   ProductVariant,
   ProductWithVariants,
+  RateLimitResult,
   Staff,
 } from "@/types";
 
@@ -53,6 +55,18 @@ export interface StaffRepository {
   findById(id: string): Promise<Staff | null>;
 }
 
+/** Backs the checkout flood/bot-protection guard — see src/app/actions/checkout.ts. */
+export interface RateLimiterRepository {
+  /** Records this attempt and reports whether it's within the allowed rate for this ip/phone pair. */
+  checkAndRecord(input: { ip: string; phone: string }): Promise<RateLimitResult>;
+}
+
+/** Lightweight in-house error monitoring — see src/lib/errorLog.ts and /admin/errors. */
+export interface ErrorLogRepository {
+  create(entry: { message: string; stack?: string; context?: Record<string, unknown>; path?: string }): Promise<void>;
+  list(limit?: number): Promise<ErrorLogEntry[]>;
+}
+
 export interface Database {
   categories: CategoryRepository;
   products: ProductRepository;
@@ -60,4 +74,6 @@ export interface Database {
   coupons: CouponRepository;
   staff: StaffRepository;
   customers: CustomerRepository;
+  rateLimiter: RateLimiterRepository;
+  errorLogs: ErrorLogRepository;
 }
