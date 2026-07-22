@@ -2,7 +2,7 @@ import Image from "next/image";
 import { getDb } from "@/lib/db";
 import { getCartMap } from "@/lib/cart";
 import { CategoryCard } from "@/components/storefront/CategoryCard";
-import { ProductCard } from "@/components/storefront/ProductCard";
+import { ProductCarousel } from "@/components/storefront/ProductCarousel";
 import { ButtonLink } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ const COMMUNITY_POINTS = [
 export default async function HomePage() {
   const db = getDb();
   const [categories, products, cart] = await Promise.all([db.categories.list(), db.products.list(), getCartMap()]);
-  const featured = products.slice(0, 4);
+  const featured = products.slice(0, 8);
 
   return (
     <div className="pb-8 md:pb-0">
@@ -80,11 +80,7 @@ export default async function HomePage() {
             View all →
           </ButtonLink>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {featured.map((product) => (
-            <ProductCard key={product.id} product={product} cart={cart} />
-          ))}
-        </div>
+        <ProductCarousel products={featured} cart={cart} />
       </section>
 
       <section className="py-14 bg-primary-50/60">

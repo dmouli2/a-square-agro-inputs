@@ -30,9 +30,9 @@ export default function HomeLoading() {
             <Skeleton className="h-4 w-52" />
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="no-scrollbar flex gap-4 overflow-x-hidden">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex flex-col gap-2 rounded-card border border-border p-3.5">
+            <div key={i} className="shrink-0 w-[46%] sm:w-[31%] md:w-[23%] flex flex-col gap-2 rounded-card border border-border p-3.5">
               <Skeleton className="aspect-square rounded-control" />
               <Skeleton className="h-3 w-16" />
               <Skeleton className="h-4 w-full" />

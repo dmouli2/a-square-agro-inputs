@@ -79,3 +79,13 @@ body {
 .link-underline:hover {
   background-size: 100% 1px;
 }
+
+/* Hides the scrollbar on horizontally-scrollable carousels/chip rows while
+   keeping native touch/trackpad/keyboard scrolling intact. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
