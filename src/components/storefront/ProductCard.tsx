@@ -9,7 +9,7 @@ export function ProductCard({ product, cart = {} }: { product: ProductWithVarian
   const imageUrl = product.images[0] ? getImageStorage().getPublicUrl(product.images[0]) : null;
 
   return (
-    <div className="group flex flex-col rounded-card bg-surface border border-border overflow-hidden shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
+    <div className="group flex h-full flex-col rounded-card bg-surface border border-border overflow-hidden shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
       <Link href={`/product/${product.slug}`} className="block">
         <div className="relative aspect-square bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center overflow-hidden">
           {imageUrl ? (
@@ -37,7 +37,7 @@ export function ProductCard({ product, cart = {} }: { product: ProductWithVarian
             </span>
           )}
         </div>
-        <div className="flex flex-col gap-1 p-3.5 pb-2">
+        <div className="flex flex-col gap-1 p-3.5 pb-2 min-h-[5.25rem]">
           <span className="text-xs font-medium text-muted uppercase tracking-wide">{product.brand}</span>
           <h3 className="font-display font-semibold text-[15px] leading-snug text-foreground line-clamp-2 group-hover:text-primary-700 transition-colors">
             {product.name}
@@ -45,7 +45,7 @@ export function ProductCard({ product, cart = {} }: { product: ProductWithVarian
         </div>
       </Link>
 
-      <div className="px-3.5 pb-3.5">
+      <div className="px-3.5 pb-3.5 mt-auto">
         <ProductCardActions variants={product.variants} cart={cart} />
       </div>
     </div>
