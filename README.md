@@ -144,9 +144,10 @@ decorative) but reuses the same color/font tokens.
   installable/offline-capable yet.
 
 **Engineering hygiene**
-- **Nothing has been committed to git.** The repo was `git init`'d early on but never committed
-  (only commit when the user explicitly asks) — everything is uncommitted working-directory
-  state right now.
+- Now committed and pushed to `github.com/dmouli2/a-square-agro-inputs` (`main` branch, no CI
+  wired to it yet — see below). Commit author auto-detected as
+  `dineshmouli@Dineshs-MacBook-Air.local` rather than a real GitHub email; fix with
+  `git config --global user.email` and amend if that matters to you.
 - No automated tests.
 - No CI/CD — every deploy so far has been a manual `vercel --prod --yes`.
 - No error monitoring (Sentry or similar).
