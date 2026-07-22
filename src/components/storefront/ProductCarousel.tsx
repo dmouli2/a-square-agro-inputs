@@ -64,12 +64,12 @@ export function ProductCarousel({ products, cart = {} }: ProductCarouselProps) {
 
       <div
         ref={trackRef}
-        className="no-scrollbar flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-1"
+        className="no-scrollbar flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-1"
       >
         {products.map((product) => (
           <div
             key={product.id}
-            className="shrink-0 snap-start w-[46%] sm:w-[31%] md:w-[23%]"
+            className="shrink-0 snap-start w-[72%] sm:w-[45%] md:w-[31%] lg:w-[23%]"
           >
             <ProductCard product={product} cart={cart} />
           </div>
