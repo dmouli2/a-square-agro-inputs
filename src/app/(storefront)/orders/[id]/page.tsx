@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { ButtonLink } from "@/components/ui/Button";
-import { STORE_WHATSAPP_NUMBER, buildWaLink, orderSummaryMessage } from "@/lib/whatsapp";
 
 export default async function OrderConfirmationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -66,18 +65,6 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
           {order.shippingAddress.district}, {order.shippingAddress.state} — {order.shippingAddress.pincode}
         </p>
       </div>
-
-      <a
-        href={buildWaLink(STORE_WHATSAPP_NUMBER, orderSummaryMessage(order))}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mb-3 flex h-13 w-full items-center justify-center gap-2 rounded-control bg-[#25D366] text-white text-base font-medium hover:brightness-95 transition"
-      >
-        Send order on WhatsApp
-      </a>
-      <p className="text-xs text-muted text-center mb-6">
-        Sends your order summary to our WhatsApp — fastest way to confirm and ask questions.
-      </p>
 
       <ButtonLink href="/shop" size="lg" className="w-full justify-center">
         Continue shopping

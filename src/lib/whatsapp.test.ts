@@ -1,12 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { makeOrder } from "@/test/fixtures";
-import {
-  STORE_WHATSAPP_NUMBER,
-  buildWaLink,
-  customerWaNumber,
-  orderSummaryMessage,
-  statusUpdateMessage,
-} from "./whatsapp";
+import { STORE_WHATSAPP_NUMBER, buildWaLink, customerWaNumber, statusUpdateMessage } from "./whatsapp";
 
 describe("buildWaLink", () => {
   it("builds a wa.me URL with the message URL-encoded", () => {
@@ -18,31 +12,6 @@ describe("buildWaLink", () => {
 describe("customerWaNumber", () => {
   it("prefixes the Indian country code onto a 10-digit number", () => {
     expect(customerWaNumber("9876543210")).toBe("919876543210");
-  });
-});
-
-describe("orderSummaryMessage", () => {
-  it("includes the order id, each line item with its line total, the order total and the delivery address", () => {
-    const message = orderSummaryMessage(makeOrder());
-    expect(message).toContain("#ORD-1");
-    expect(message).toContain("Hybrid Maize Seed (1 kg) × 2");
-    expect(message).toContain("Cash on Delivery");
-    expect(message).toContain("Ramesh Kumar, 9876543210");
-  });
-
-  it("omits empty optional address parts instead of printing blank segments", () => {
-    const order = makeOrder();
-    order.shippingAddress = { ...order.shippingAddress, line2: undefined, village: undefined };
-    const message = orderSummaryMessage(order);
-    expect(message).not.toContain(", ,");
-    expect(message).not.toContain("undefined");
-  });
-
-  it("joins line2 and village into the address when present", () => {
-    const order = makeOrder();
-    order.shippingAddress = { ...order.shippingAddress, line2: "Near temple", village: "Palem" };
-    const message = orderSummaryMessage(order);
-    expect(message).toContain("Near temple, Palem");
   });
 });
 

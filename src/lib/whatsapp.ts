@@ -1,6 +1,7 @@
 import type { Order, OrderStatus } from "@/types";
 
-/** The store's WhatsApp Business number, international format without "+". */
+/** The store's WhatsApp Business number, international format without "+". Used by the
+ *  floating "Chat with us" button (src/components/storefront/WhatsAppButton.tsx). */
 export const STORE_WHATSAPP_NUMBER = "916374597757";
 
 export function buildWaLink(number: string, message: string): string {
@@ -17,28 +18,6 @@ export function customerWaNumber(phone: string): string {
 
 const inr = (value: number) =>
   value.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
-
-/**
- * Customer → store message: the full order summary, sent from the order
- * confirmation page. Doubles as the store's new-order notification and the
- * customer's receipt thread.
- */
-export function orderSummaryMessage(order: Order): string {
-  const a = order.shippingAddress;
-  const address = [a.line1, a.line2, a.village, a.district, a.state].filter(Boolean).join(", ");
-  return [
-    `Hi, I just placed order #${order.id} on A Square Agro Inputs.`,
-    "",
-    ...order.items.map(
-      (item) =>
-        `• ${item.productName} (${item.variantLabel}) × ${item.quantity} — ${inr(item.priceAtPurchase * item.quantity)}`
-    ),
-    "",
-    `Total: ${inr(order.total)} (Cash on Delivery)`,
-    `Deliver to: ${a.fullName}, ${a.phone}`,
-    `${address} — ${a.pincode}`,
-  ].join("\n");
-}
 
 const STATUS_LINES: Record<OrderStatus, string> = {
   pending: "we've received your order and will call you shortly to confirm it.",

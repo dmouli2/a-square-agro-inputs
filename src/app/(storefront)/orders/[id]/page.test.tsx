@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { makeOrder } from "@/test/fixtures";
-import { STORE_WHATSAPP_NUMBER } from "@/lib/whatsapp";
 
 const findById = vi.fn();
 
@@ -37,17 +36,13 @@ describe("OrderConfirmationPage", () => {
     ).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
-  it("links 'Send order on WhatsApp' to the store number with the order summary prefilled", async () => {
+  it("does not ask the customer to relay their own order to the store over WhatsApp", async () => {
     findById.mockResolvedValue(makeOrder());
 
     const jsx = await OrderConfirmationPage({ params: Promise.resolve({ id: "ORD-1" }) });
     render(jsx);
 
-    const link = screen.getByRole("link", { name: "Send order on WhatsApp" });
-    const href = link.getAttribute("href")!;
-    expect(href).toContain(`https://wa.me/${STORE_WHATSAPP_NUMBER}?text=`);
-    expect(decodeURIComponent(href)).toContain("#ORD-1");
-    expect(link).toHaveAttribute("target", "_blank");
+    expect(screen.queryByRole("link", { name: "Send order on WhatsApp" })).not.toBeInTheDocument();
   });
 
   it("renders an optional address line2/village when present", async () => {
