@@ -108,13 +108,21 @@ decorative) but reuses the same color/font tokens.
 ## What's next (not built yet)
 
 **Checkout & orders**
-- Coupons: schema + `CouponRepository` port exist, no Supabase adapter, no admin UI to create
-  codes, no "apply coupon" field at checkout.
-- `/orders` tab is still a placeholder — `orders.listByPhone()` works server-side, nothing calls it.
-- No shipping/delivery fee logic (total is always just the subtotal) and no
-  pincode-serviceability check.
-- No order notifications (email/WhatsApp/SMS) on placement, for either the customer or you.
-- No GST/tax line item on orders (HSN codes are stored per product, but not surfaced as tax).
+- Out of scope (decided 2026-07-22, don't re-propose): coupons (schema + port exist but stay
+  unwired), shipping/delivery-fee & pincode-serviceability logic, and GST/tax line items
+  (HSN codes stay stored per product, unsurfaced).
+- ~~`/orders` tab placeholder~~ **Done (2026-07-22):** phone-number lookup page — remembers the
+  checkout phone in an httpOnly `a2_phone` cookie (1 year) and also accepts `?phone=`; both
+  inputs are validated by `isValidPhone` in `src/lib/orderLookup.ts` before hitting
+  `orders.listByPhone()`. Known trade-off, accepted: anyone who knows a customer's phone number
+  can view that customer's order history/address (no OTP step).
+- ~~No order notifications~~ **Done (2026-07-22), wa.me-link flavor by explicit decision** (no
+  WhatsApp Business API / Twilio — zero cost, one manual tap per message, `src/lib/whatsapp.ts`):
+  the order confirmation page's "Send order on WhatsApp" button prefills the full order summary
+  into a chat with the store number, and the admin order detail's "Notify customer" button
+  prefills a status-specific update into a chat with the customer. Automated server-side sending
+  is a possible future upgrade — the message formatters in `src/lib/whatsapp.ts` are already
+  separated from link building with that in mind.
 
 **Admin panel**
 - Categories are fixed/seeded — no add/edit/delete UI.
@@ -149,7 +157,7 @@ decorative) but reuses the same color/font tokens.
   `dineshmouli@Dineshs-MacBook-Air.local` rather than a real GitHub email; fix with
   `git config --global user.email` and amend if that matters to you.
 - No automated tests.
-- No CI/CD — every deploy so far has been a manual `vercel --prod --yes`.
+- CI/CD is **out of scope** (decided 2026-07-22) — deploys are deliberately manual `vercel --prod --yes`; don't re-propose pipelines.
 - No error monitoring (Sentry or similar).
 - No rate-limiting/bot protection on the checkout form (open to spam orders — no CAPTCHA/throttle).
 - Still on the `*.vercel.app` URL, no custom domain.

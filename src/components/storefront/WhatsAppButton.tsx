@@ -1,8 +1,9 @@
-const WHATSAPP_NUMBER = "916374597757";
+import { STORE_WHATSAPP_NUMBER, buildWaLink } from "@/lib/whatsapp";
+
 const DEFAULT_MESSAGE = "Hi, I'd like to know more about your products.";
 
 export function WhatsAppButton() {
-  const href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(DEFAULT_MESSAGE)}`;
+  const href = buildWaLink(STORE_WHATSAPP_NUMBER, DEFAULT_MESSAGE);
 
   return (
     <a

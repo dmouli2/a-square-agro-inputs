@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { updateOrderStatus } from "@/app/actions/adminOrders";
+import { buildWaLink, customerWaNumber, statusUpdateMessage } from "@/lib/whatsapp";
 
 const STATUS_OPTIONS = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "returned"];
 
@@ -37,6 +38,14 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             Update
           </button>
         </form>
+        <a
+          href={buildWaLink(customerWaNumber(order.shippingAddress.phone), statusUpdateMessage(order))}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-auto inline-flex h-10 items-center gap-1.5 rounded-control bg-[#25D366] px-4 text-sm font-medium text-white hover:brightness-95"
+        >
+          Notify customer
+        </a>
       </div>
 
       <div className="rounded-card border border-border bg-surface px-4">
