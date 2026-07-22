@@ -5,6 +5,17 @@ import { mapProduct, mapVariant } from "./mappers";
 
 const PRODUCT_WITH_VARIANTS_SELECT = "*, product_variants(*)";
 
+// PostgREST's .or() takes a raw filter-string ("cond1,cond2,...") that it
+// parses itself — "," separates conditions and "()" nest groups, so an
+// unescaped search term could inject extra filter clauses rather than just
+// matching text (filter-string injection). "%"/"_" are SQL LIKE wildcards
+// too, so strip those as well rather than letting a search turn into an
+// open wildcard scan. Only characters that can plausibly appear in a
+// product/brand name survive.
+function sanitizeSearchTerm(raw: string): string {
+  return raw.replace(/[^a-zA-Z0-9\s-]/g, "").trim().slice(0, 100);
+}
+
 function toProductWithVariants(row: Record<string, unknown>): ProductWithVariants {
   const variantRows = (row.product_variants as Record<string, unknown>[]) ?? [];
   return { ...mapProduct(row), variants: variantRows.map(mapVariant) };
@@ -61,7 +72,10 @@ export function createSupabaseProductRepository(): ProductRepository {
       }
 
       if (params?.search) {
-        query = query.or(`name.ilike.%${params.search}%,brand.ilike.%${params.search}%`);
+        const term = sanitizeSearchTerm(params.search);
+        if (term) {
+          query = query.or(`name.ilike.%${term}%,brand.ilike.%${term}%`);
+        }
       }
 
       const { data, error } = await query;

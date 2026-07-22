@@ -17,6 +17,14 @@ export function ProductPurchasePanel({ variants, initialCartQuantities }: Produc
   const [cartQuantities, setCartQuantities] = useState(initialCartQuantities);
   const [isPending, startTransition] = useTransition();
   const selected = variants.find((v) => v.id === selectedId) ?? variants[0];
+
+  // A product with no variants (all pack sizes deleted from the admin panel)
+  // has nothing purchasable to show — render a fallback instead of crashing
+  // on selected.stockQty below.
+  if (!selected) {
+    return <p className="text-sm text-foreground/60">This product is currently unavailable.</p>;
+  }
+
   const inStock = selected.stockQty > 0;
   const inCartQty = cartQuantities[selected.id] ?? 0;
 

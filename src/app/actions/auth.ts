@@ -10,6 +10,12 @@ export interface LoginState {
   error: string | null;
 }
 
+// A valid-shaped bcrypt hash of a value nobody will ever type as a password.
+// Used to keep the login response time constant whether or not the email
+// matches an account, so timing can't be used to enumerate valid admin
+// emails (a real bcrypt.compare() and this dummy one cost about the same).
+const DUMMY_PASSWORD_HASH = "$2b$10$U635vaF8l/Gb1yh3aBwK8u2KeD/GJaOEMyDe.bbBNdfaFTLPYrKmm";
+
 export async function login(_prevState: LoginState, formData: FormData): Promise<LoginState> {
   const email = formData.get("email");
   const password = formData.get("password");
@@ -18,12 +24,9 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
   }
 
   const staff = await getDb().staff.findByEmail(email.trim().toLowerCase());
-  if (!staff || !staff.active) {
-    return { error: "Invalid email or password." };
-  }
+  const valid = await bcrypt.compare(password, staff && staff.active ? staff.passwordHash : DUMMY_PASSWORD_HASH);
 
-  const valid = await bcrypt.compare(password, staff.passwordHash);
-  if (!valid) {
+  if (!staff || !staff.active || !valid) {
     return { error: "Invalid email or password." };
   }
 

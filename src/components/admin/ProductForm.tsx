@@ -27,16 +27,16 @@ export function ProductForm({ categories, mode, product }: ProductFormProps) {
     <form action={formAction} className="flex flex-col gap-5">
       <div className="grid md:grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Product name</label>
-          <input name="name" defaultValue={product?.name} required className={inputClass} />
+          <label className={labelClass} htmlFor="name">Product name</label>
+          <input id="name" name="name" defaultValue={product?.name} required className={inputClass} />
         </div>
         <div>
-          <label className={labelClass}>Brand / manufacturer</label>
-          <input name="brand" defaultValue={product?.brand} required className={inputClass} />
+          <label className={labelClass} htmlFor="brand">Brand / manufacturer</label>
+          <input id="brand" name="brand" defaultValue={product?.brand} required className={inputClass} />
         </div>
         <div>
-          <label className={labelClass}>Category</label>
-          <select name="categoryId" defaultValue={product?.categoryId} required className={inputClass}>
+          <label className={labelClass} htmlFor="categoryId">Category</label>
+          <select id="categoryId" name="categoryId" defaultValue={product?.categoryId} required className={inputClass}>
             <option value="" disabled>
               Select category
             </option>
@@ -48,8 +48,8 @@ export function ProductForm({ categories, mode, product }: ProductFormProps) {
           </select>
         </div>
         <div>
-          <label className={labelClass}>Status</label>
-          <select name="status" defaultValue={product?.status ?? "draft"} className={inputClass}>
+          <label className={labelClass} htmlFor="status">Status</label>
+          <select id="status" name="status" defaultValue={product?.status ?? "draft"} className={inputClass}>
             <option value="draft">Draft (hidden from shop)</option>
             <option value="active">Active (visible in shop)</option>
             <option value="archived">Archived</option>
@@ -71,13 +71,14 @@ export function ProductForm({ categories, mode, product }: ProductFormProps) {
       </label>
 
       <div>
-        <label className={labelClass}>Description</label>
-        <textarea name="description" rows={3} defaultValue={product?.description} className={textareaClass} />
+        <label className={labelClass} htmlFor="description">Description</label>
+        <textarea id="description" name="description" rows={3} defaultValue={product?.description} className={textareaClass} />
       </div>
 
       <div>
-        <label className={labelClass}>Crop compatibility (comma-separated)</label>
+        <label className={labelClass} htmlFor="cropCompatibility">Crop compatibility (comma-separated)</label>
         <input
+          id="cropCompatibility"
           name="cropCompatibility"
           defaultValue={product?.cropCompatibility.join(", ")}
           placeholder="Cotton, Chilli, Paddy"
@@ -87,26 +88,26 @@ export function ProductForm({ categories, mode, product }: ProductFormProps) {
 
       <div className="grid md:grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Active ingredient</label>
-          <input name="activeIngredient" defaultValue={product?.activeIngredient} className={inputClass} />
+          <label className={labelClass} htmlFor="activeIngredient">Active ingredient</label>
+          <input id="activeIngredient" name="activeIngredient" defaultValue={product?.activeIngredient} className={inputClass} />
         </div>
         <div>
-          <label className={labelClass}>Composition</label>
-          <input name="composition" defaultValue={product?.composition} className={inputClass} />
+          <label className={labelClass} htmlFor="composition">Composition</label>
+          <input id="composition" name="composition" defaultValue={product?.composition} className={inputClass} />
         </div>
         <div>
-          <label className={labelClass}>CIB&amp;RC registration number</label>
-          <input name="registrationNumber" defaultValue={product?.registrationNumber} className={inputClass} />
+          <label className={labelClass} htmlFor="registrationNumber">CIB&amp;RC registration number</label>
+          <input id="registrationNumber" name="registrationNumber" defaultValue={product?.registrationNumber} className={inputClass} />
         </div>
         <div>
-          <label className={labelClass}>HSN code</label>
-          <input name="hsnCode" defaultValue={product?.hsnCode} className={inputClass} />
+          <label className={labelClass} htmlFor="hsnCode">HSN code</label>
+          <input id="hsnCode" name="hsnCode" defaultValue={product?.hsnCode} className={inputClass} />
         </div>
       </div>
 
       <div>
-        <label className={labelClass}>Usage instructions</label>
-        <textarea name="usageInstructions" rows={2} defaultValue={product?.usageInstructions} className={textareaClass} />
+        <label className={labelClass} htmlFor="usageInstructions">Usage instructions</label>
+        <textarea id="usageInstructions" name="usageInstructions" rows={2} defaultValue={product?.usageInstructions} className={textareaClass} />
       </div>
 
       {mode === "create" && (
@@ -117,16 +118,16 @@ export function ProductForm({ categories, mode, product }: ProductFormProps) {
           </p>
           <div className="grid md:grid-cols-3 gap-4">
             <div>
-              <label className={labelClass}>Label (e.g. &quot;500 g&quot;)</label>
-              <input name="variantLabel" required className={inputClass} />
+              <label className={labelClass} htmlFor="variantLabel">Label (e.g. &quot;500 g&quot;)</label>
+              <input id="variantLabel" name="variantLabel" required className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Pack size</label>
-              <input name="variantPackSize" type="number" step="any" defaultValue={1} required className={inputClass} />
+              <label className={labelClass} htmlFor="variantPackSize">Pack size</label>
+              <input id="variantPackSize" name="variantPackSize" type="number" step="any" defaultValue={1} required className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Unit</label>
-              <select name="variantUnit" defaultValue="piece" className={inputClass}>
+              <label className={labelClass} htmlFor="variantUnit">Unit</label>
+              <select id="variantUnit" name="variantUnit" defaultValue="piece" className={inputClass}>
                 <option value="g">g</option>
                 <option value="kg">kg</option>
                 <option value="ml">ml</option>
@@ -136,20 +137,20 @@ export function ProductForm({ categories, mode, product }: ProductFormProps) {
               </select>
             </div>
             <div>
-              <label className={labelClass}>SKU</label>
-              <input name="variantSku" required className={inputClass} />
+              <label className={labelClass} htmlFor="variantSku">SKU</label>
+              <input id="variantSku" name="variantSku" required className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Price (₹)</label>
-              <input name="variantPrice" type="number" step="any" required className={inputClass} />
+              <label className={labelClass} htmlFor="variantPrice">Price (₹)</label>
+              <input id="variantPrice" name="variantPrice" type="number" step="any" required className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>MRP (₹)</label>
-              <input name="variantMrp" type="number" step="any" required className={inputClass} />
+              <label className={labelClass} htmlFor="variantMrp">MRP (₹)</label>
+              <input id="variantMrp" name="variantMrp" type="number" step="any" required className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Stock quantity</label>
-              <input name="variantStockQty" type="number" defaultValue={0} required className={inputClass} />
+              <label className={labelClass} htmlFor="variantStockQty">Stock quantity</label>
+              <input id="variantStockQty" name="variantStockQty" type="number" defaultValue={0} required className={inputClass} />
             </div>
           </div>
         </div>

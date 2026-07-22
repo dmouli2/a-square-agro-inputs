@@ -36,6 +36,20 @@ export function createSupabaseOrderRepository(): OrderRepository {
         throw new Error("One or more cart items are no longer available.");
       }
 
+      // Reject the order outright if the requested quantity exceeds current
+      // stock for any line — cart quantities are user-controlled (see
+      // src/lib/cart.ts) and must never be trusted for fulfillment as-is.
+      // Note: this only *validates* against the stock snapshot at order time;
+      // it does not decrement stock afterwards, so it doesn't fully prevent
+      // overselling across many concurrent orders (see README "What's next").
+      const outOfStock = input.items.find((cartItem) => {
+        const row = variantRows.find((v) => v.id === cartItem.variantId)!;
+        return cartItem.quantity > (row.stock_qty as number);
+      });
+      if (outOfStock) {
+        throw new Error("One or more items in your cart exceed available stock.");
+      }
+
       const itemsData = input.items.map((cartItem) => {
         const row = variantRows.find((v) => v.id === cartItem.variantId)!;
         return {

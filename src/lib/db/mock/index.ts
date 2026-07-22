@@ -154,6 +154,9 @@ export function createMockDb(): Database {
           if (!product || !variant) {
             throw new Error(`Variant ${cartItem.variantId} not found`);
           }
+          if (cartItem.quantity > variant.stockQty) {
+            throw new Error("One or more items in your cart exceed available stock.");
+          }
           return {
             id: `ITEM-${cartItem.variantId}-${Date.now()}`,
             orderId,
