@@ -1,3 +1,9 @@
+import { STORE_WHATSAPP_NUMBER } from "@/lib/whatsapp";
+
+/** Same number the floating WhatsApp button uses — single source of truth. */
+const STORE_LOCAL_NUMBER = STORE_WHATSAPP_NUMBER.slice(2);
+const STORE_DISPLAY_NUMBER = `${STORE_LOCAL_NUMBER.slice(0, 5)} ${STORE_LOCAL_NUMBER.slice(5)}`;
+
 export function SiteFooter() {
   return (
     <footer className="mt-16 border-t border-border bg-primary-900 text-primary-50 pb-20 md:pb-0">
@@ -18,7 +24,9 @@ export function SiteFooter() {
         </div>
         <div className="flex flex-col gap-2 text-sm">
           <span className="font-semibold text-white mb-1">Support</span>
-          <span className="text-primary-100/80">Call us: +91 00000 00000</span>
+          <a href={`tel:+${STORE_WHATSAPP_NUMBER}`} className="text-primary-100/80 hover:text-white transition-colors">
+            Call us: +91 {STORE_DISPLAY_NUMBER}
+          </a>
           <span className="text-primary-100/80">Mon–Sat, 9am–7pm</span>
         </div>
       </div>
