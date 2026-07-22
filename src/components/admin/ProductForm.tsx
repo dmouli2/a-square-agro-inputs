@@ -1,0 +1,156 @@
+"use client";
+
+import { useActionState } from "react";
+import type { Category, Product } from "@/types";
+import { createProduct, updateProduct, type ProductFormState } from "@/app/actions/products";
+import { Button } from "@/components/ui/Button";
+
+const initialState: ProductFormState = { error: null };
+
+const inputClass =
+  "h-11 rounded-control border border-border bg-surface px-3.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-500 w-full";
+const textareaClass =
+  "rounded-control border border-border bg-surface px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-500 w-full";
+const labelClass = "text-sm font-medium text-foreground mb-1.5 block";
+
+interface ProductFormProps {
+  categories: Category[];
+  mode: "create" | "edit";
+  product?: Product;
+}
+
+export function ProductForm({ categories, mode, product }: ProductFormProps) {
+  const action = mode === "create" ? createProduct : updateProduct.bind(null, product!.id);
+  const [state, formAction, isPending] = useActionState(action, initialState);
+
+  return (
+    <form action={formAction} className="flex flex-col gap-5">
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className={labelClass}>Product name</label>
+          <input name="name" defaultValue={product?.name} required className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Brand / manufacturer</label>
+          <input name="brand" defaultValue={product?.brand} required className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Category</label>
+          <select name="categoryId" defaultValue={product?.categoryId} required className={inputClass}>
+            <option value="" disabled>
+              Select category
+            </option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Status</label>
+          <select name="status" defaultValue={product?.status ?? "draft"} className={inputClass}>
+            <option value="draft">Draft (hidden from shop)</option>
+            <option value="active">Active (visible in shop)</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className={labelClass}>Description</label>
+        <textarea name="description" rows={3} defaultValue={product?.description} className={textareaClass} />
+      </div>
+
+      <div>
+        <label className={labelClass}>Crop compatibility (comma-separated)</label>
+        <input
+          name="cropCompatibility"
+          defaultValue={product?.cropCompatibility.join(", ")}
+          placeholder="Cotton, Chilli, Paddy"
+          className={inputClass}
+        />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className={labelClass}>Active ingredient</label>
+          <input name="activeIngredient" defaultValue={product?.activeIngredient} className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Composition</label>
+          <input name="composition" defaultValue={product?.composition} className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>CIB&amp;RC registration number</label>
+          <input name="registrationNumber" defaultValue={product?.registrationNumber} className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>HSN code</label>
+          <input name="hsnCode" defaultValue={product?.hsnCode} className={inputClass} />
+        </div>
+      </div>
+
+      <div>
+        <label className={labelClass}>Usage instructions</label>
+        <textarea name="usageInstructions" rows={2} defaultValue={product?.usageInstructions} className={textareaClass} />
+      </div>
+
+      {mode === "create" && (
+        <div className="rounded-card border border-border p-4 flex flex-col gap-4">
+          <h3 className="font-display font-semibold text-sm text-foreground">First pack size</h3>
+          <p className="text-xs text-muted -mt-2">
+            Add more pack sizes after creating the product.
+          </p>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div>
+              <label className={labelClass}>Label (e.g. &quot;500 g&quot;)</label>
+              <input name="variantLabel" required className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Pack size</label>
+              <input name="variantPackSize" type="number" step="any" defaultValue={1} required className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Unit</label>
+              <select name="variantUnit" defaultValue="piece" className={inputClass}>
+                <option value="g">g</option>
+                <option value="kg">kg</option>
+                <option value="ml">ml</option>
+                <option value="L">L</option>
+                <option value="packet">packet</option>
+                <option value="piece">piece</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>SKU</label>
+              <input name="variantSku" required className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Price (₹)</label>
+              <input name="variantPrice" type="number" step="any" required className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>MRP (₹)</label>
+              <input name="variantMrp" type="number" step="any" required className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Stock quantity</label>
+              <input name="variantStockQty" type="number" defaultValue={0} required className={inputClass} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {state.error && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-control px-3.5 py-2.5">
+          {state.error}
+        </p>
+      )}
+
+      <Button type="submit" size="lg" disabled={isPending} className="w-fit">
+        {isPending ? "Saving…" : mode === "create" ? "Create product" : "Save changes"}
+      </Button>
+    </form>
+  );
+}

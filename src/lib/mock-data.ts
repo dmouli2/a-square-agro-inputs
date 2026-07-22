@@ -1,0 +1,119 @@
+import type { Category, ProductWithVariants } from "@/types";
+
+export const CATEGORIES: Category[] = [
+  { id: "cat-seeds", slug: "seeds", name: "Seeds", description: "Certified high-yield seed varieties" },
+  { id: "cat-fertilizers", slug: "fertilizers", name: "Fertilizers", description: "Soil nutrients & bio-fertilizers" },
+  { id: "cat-crop-protection", slug: "crop-protection", name: "Crop Protection", description: "Insecticides, fungicides & herbicides" },
+  { id: "cat-tools", slug: "tools-equipment", name: "Tools & Equipment", description: "Sprayers, hand tools & irrigation" },
+];
+
+export const PRODUCTS: ProductWithVariants[] = [
+  {
+    id: "prod-1",
+    slug: "taqat-insecticide",
+    name: "Taqat Insecticide",
+    brand: "Tata Rallis",
+    categoryId: "cat-crop-protection",
+    description:
+      "Broad-spectrum insecticide for effective control of sucking and chewing pests across cotton, chilli and vegetable crops.",
+    images: [],
+    status: "active",
+    cropCompatibility: ["Cotton", "Chilli", "Vegetables"],
+    activeIngredient: "Profenofos 40% + Cypermethrin 4% EC",
+    usageInstructions: "Dilute 2ml per litre of water. Spray during early morning or evening.",
+    registrationNumber: "CIB&RC/REG/2019/1234",
+    hsnCode: "38089199",
+    variants: [
+      { id: "var-1a", productId: "prod-1", sku: "TAQAT-100ML", label: "100 ml", packSize: 100, unit: "ml", price: 185, mrp: 210, stockQty: 42 },
+      { id: "var-1b", productId: "prod-1", sku: "TAQAT-500ML", label: "500 ml", packSize: 500, unit: "ml", price: 820, mrp: 920, stockQty: 18 },
+    ],
+  },
+  {
+    id: "prod-2",
+    slug: "dap-fertilizer",
+    name: "DAP Fertilizer",
+    brand: "IFFCO",
+    categoryId: "cat-fertilizers",
+    description:
+      "Di-Ammonium Phosphate — high phosphorus content for strong root development in the early growth stage.",
+    images: [],
+    status: "active",
+    cropCompatibility: ["Paddy", "Wheat", "Sugarcane", "Cotton"],
+    composition: "N 18% : P 46% : K 0%",
+    usageInstructions: "Apply 50kg per acre as basal dose at the time of sowing.",
+    hsnCode: "31031000",
+    variants: [
+      { id: "var-2a", productId: "prod-2", sku: "DAP-50KG", label: "50 kg", packSize: 50, unit: "kg", price: 1350, mrp: 1400, stockQty: 60 },
+    ],
+  },
+  {
+    id: "prod-3",
+    slug: "hybrid-paddy-seed",
+    name: "Hybrid Paddy Seed — Arize 6444",
+    brand: "Bayer",
+    categoryId: "cat-seeds",
+    description:
+      "High-yielding hybrid paddy variety with strong disease resistance and excellent grain quality, suited for irrigated conditions.",
+    images: [],
+    status: "active",
+    cropCompatibility: ["Paddy"],
+    usageInstructions: "Sow 8-10kg seed per acre in nursery, transplant after 25-30 days.",
+    hsnCode: "10063000",
+    variants: [
+      { id: "var-3a", productId: "prod-3", sku: "ARIZE6444-2KG", label: "2 kg bag", packSize: 2, unit: "kg", price: 620, mrp: 650, stockQty: 120 },
+      { id: "var-3b", productId: "prod-3", sku: "ARIZE6444-10KG", label: "10 kg bag", packSize: 10, unit: "kg", price: 2950, mrp: 3100, stockQty: 34 },
+    ],
+  },
+  {
+    id: "prod-4",
+    slug: "knapsack-sprayer-16l",
+    name: "Battery Knapsack Sprayer",
+    brand: "Neptune",
+    categoryId: "cat-tools",
+    description:
+      "16-litre rechargeable battery sprayer with adjustable nozzle — covers up to 4 acres per charge.",
+    images: [],
+    status: "active",
+    cropCompatibility: [],
+    hsnCode: "84242000",
+    variants: [
+      { id: "var-4a", productId: "prod-4", sku: "SPRAY-16L", label: "16 L", packSize: 16, unit: "piece", price: 2450, mrp: 2800, stockQty: 15 },
+    ],
+  },
+  {
+    id: "prod-5",
+    slug: "npk-water-soluble",
+    name: "NPK 19:19:19 Water Soluble Fertilizer",
+    brand: "Coromandel",
+    categoryId: "cat-fertilizers",
+    description: "Fully water-soluble balanced fertilizer ideal for fertigation and foliar spray.",
+    images: [],
+    status: "active",
+    cropCompatibility: ["Vegetables", "Fruits", "Cotton"],
+    composition: "N 19% : P 19% : K 19%",
+    hsnCode: "31051000",
+    variants: [
+      { id: "var-5a", productId: "prod-5", sku: "NPK-1KG", label: "1 kg", packSize: 1, unit: "kg", price: 145, mrp: 160, stockQty: 200 },
+      { id: "var-5b", productId: "prod-5", sku: "NPK-5KG", label: "5 kg", packSize: 5, unit: "kg", price: 680, mrp: 750, stockQty: 75 },
+    ],
+  },
+  {
+    id: "prod-6",
+    slug: "mancozeb-fungicide",
+    name: "Mancozeb 75% WP Fungicide",
+    brand: "Dhanuka",
+    categoryId: "cat-crop-protection",
+    description: "Protective fungicide effective against early and late blight, downy mildew and rust.",
+    images: [],
+    status: "active",
+    cropCompatibility: ["Potato", "Tomato", "Grapes"],
+    activeIngredient: "Mancozeb 75% WP",
+    usageInstructions: "Mix 2.5g per litre of water and spray at first sign of disease.",
+    registrationNumber: "CIB&RC/REG/2017/0876",
+    hsnCode: "38089219",
+    variants: [
+      { id: "var-6a", productId: "prod-6", sku: "MANCO-250G", label: "250 g", packSize: 250, unit: "g", price: 165, mrp: 185, stockQty: 55 },
+      { id: "var-6b", productId: "prod-6", sku: "MANCO-1KG", label: "1 kg", packSize: 1, unit: "kg", price: 580, mrp: 640, stockQty: 22 },
+    ],
+  },
+];
