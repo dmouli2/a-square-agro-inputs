@@ -4,10 +4,6 @@ import { getCartMap } from "@/lib/cart";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { SearchBar } from "@/components/storefront/SearchBar";
 
-function lowestPricedVariant(product: { variants: { id: string; price: number }[] }) {
-  return [...product.variants].sort((a, b) => a.price - b.price)[0];
-}
-
 export default async function ShopPage({
   searchParams,
 }: {
@@ -86,7 +82,7 @@ export default async function ShopPage({
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} cartQuantity={cart[lowestPricedVariant(product).id] ?? 0} />
+            <ProductCard key={product.id} product={product} cart={cart} />
           ))}
         </div>
       )}

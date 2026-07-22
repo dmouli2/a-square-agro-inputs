@@ -3,7 +3,6 @@ import { getDb } from "@/lib/db";
 import { getCartMap } from "@/lib/cart";
 import { CategoryCard } from "@/components/storefront/CategoryCard";
 import { ProductCard } from "@/components/storefront/ProductCard";
-import { SearchBar } from "@/components/storefront/SearchBar";
 import { ButtonLink } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
@@ -15,9 +14,12 @@ const TRUST_BADGES = [
   { icon: "📞", label: "Expert advice on call", detail: "Ask us before you buy, not after" },
 ];
 
-function lowestPricedVariant(product: { variants: { id: string; price: number }[] }) {
-  return [...product.variants].sort((a, b) => a.price - b.price)[0];
-}
+const COMMUNITY_POINTS = [
+  "Every product checked for genuine certification before it's listed",
+  "Fair, transparent pricing — no last-minute markups at checkout",
+  "Doorstep delivery, even to villages courier apps won't cover",
+  "WhatsApp support to ask questions before you buy, not after",
+];
 
 export default async function HomePage() {
   const db = getDb();
@@ -52,16 +54,9 @@ export default async function HomePage() {
             trusted brands, priced fairly, and delivered straight to your village.
           </p>
 
-          <div className="pt-1 max-w-md">
-            <SearchBar size="lg" placeholder="Search for DAP, paddy seeds, sprayers…" />
-          </div>
-
           <div className="flex flex-wrap gap-3 pt-1">
             <ButtonLink href="/shop" size="lg" variant="accent">
               Shop now
-            </ButtonLink>
-            <ButtonLink href="/shop?category=seeds" size="lg" variant="secondary" className="bg-white/10 text-white border-white/25 hover:bg-white/20">
-              Browse seeds
             </ButtonLink>
           </div>
         </div>
@@ -87,14 +82,41 @@ export default async function HomePage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {featured.map((product) => (
-            <ProductCard key={product.id} product={product} cartQuantity={cart[lowestPricedVariant(product).id] ?? 0} />
+            <ProductCard key={product.id} product={product} cart={cart} />
           ))}
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-10">
-        <div className="relative overflow-hidden rounded-card grid md:grid-cols-2">
-          <div className="relative min-h-56 md:min-h-full">
+      <section className="py-14 bg-primary-50/60">
+        <div className="mx-auto max-w-6xl px-4 grid md:grid-cols-2 gap-10 items-center">
+          <div className="flex flex-col gap-4 order-2 md:order-1">
+            <span className="text-xs font-semibold tracking-wide uppercase text-primary-700">Our promise to you</span>
+            <h2 className="font-display font-bold text-3xl leading-snug text-foreground">
+              A Square Farmer Promise
+            </h2>
+            <p className="text-muted text-[15px] leading-relaxed">
+              We started A Square Agro Inputs to close the gap between what farmers actually
+              need and what gets pushed on them.
+            </p>
+            <ul className="flex flex-col gap-2.5 mt-1">
+              {COMMUNITY_POINTS.map((point) => (
+                <li key={point} className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-700 text-white text-[11px]">
+                    ✓
+                  </span>
+                  {point}
+                </li>
+              ))}
+            </ul>
+            <ButtonLink href="/shop" variant="accent" size="md" className="w-fit mt-2">
+              Explore the catalog
+            </ButtonLink>
+          </div>
+
+          <div
+            className="relative h-72 md:h-96 order-1 md:order-2 overflow-hidden"
+            style={{ borderRadius: "63% 37% 54% 46% / 43% 47% 53% 57%" }}
+          >
             <Image
               src="/images/trust-farmers-field.jpg"
               alt="Farmers working together in a field"
@@ -102,21 +124,6 @@ export default async function HomePage() {
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover"
             />
-          </div>
-          <div className="bg-primary-900 text-white p-7 md:p-10 flex flex-col justify-center gap-3">
-            <span className="text-xs font-semibold tracking-wide uppercase text-accent-400">Why farmers choose us</span>
-            <h2 className="font-display font-bold text-2xl leading-snug">
-              We know the difference between a good season and a hard one.
-            </h2>
-            <p className="text-primary-50/85 text-[15px] leading-relaxed">
-              A Square Agro Inputs was started to close the gap between what farmers actually
-              need and what gets pushed on them. Every product we list is checked for genuine
-              certification and stocked at a fair price — no unnecessary upselling, no
-              expired stock, no guesswork.
-            </p>
-            <ButtonLink href="/shop" variant="accent" size="md" className="w-fit mt-2">
-              Explore the catalog
-            </ButtonLink>
           </div>
         </div>
       </section>

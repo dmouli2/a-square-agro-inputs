@@ -41,6 +41,14 @@ export async function removeFromCart(variantId: string) {
   await saveCart(cart);
 }
 
+export async function removeManyFromCart(variantIds: string[]) {
+  const cart = await getCartMap();
+  for (const variantId of variantIds) {
+    delete cart[variantId];
+  }
+  await saveCart(cart);
+}
+
 export async function clearCart() {
   await saveCart({});
 }

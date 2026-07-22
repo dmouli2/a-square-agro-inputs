@@ -26,3 +26,14 @@ export function getSupabaseClient(): SupabaseClient {
 export function resetSupabaseClientForTests() {
   client = null;
 }
+
+/**
+ * True for Postgres's "invalid input syntax for type uuid" (22P02) — thrown
+ * when a `.eq("id", value)` lookup gets a malformed id (e.g. a stale mock-data
+ * id like "var-3a" left over in a browser's cart cookie from before the app
+ * was wired to Supabase). Callers treat this the same as "row not found"
+ * rather than letting it crash the page.
+ */
+export function isInvalidUuidError(error: { code?: string } | null | undefined): boolean {
+  return error?.code === "22P02";
+}

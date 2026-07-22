@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "@/lib/supabase/client";
+import { getSupabaseClient, isInvalidUuidError } from "@/lib/supabase/client";
 import type { ProductRepository } from "@/lib/db/types";
 import type { Product, ProductVariant, ProductWithVariants } from "@/types";
 import { mapProduct, mapVariant } from "./mappers";
@@ -93,7 +93,10 @@ export function createSupabaseProductRepository(): ProductRepository {
         .select(PRODUCT_WITH_VARIANTS_SELECT)
         .eq("id", id)
         .maybeSingle();
-      if (error) throw error;
+      if (error) {
+        if (isInvalidUuidError(error)) return null;
+        throw error;
+      }
       return data ? toProductWithVariants(data) : null;
     },
 
@@ -104,7 +107,10 @@ export function createSupabaseProductRepository(): ProductRepository {
         .select("product_id")
         .eq("id", variantId)
         .maybeSingle();
-      if (variantError) throw variantError;
+      if (variantError) {
+        if (isInvalidUuidError(variantError)) return null;
+        throw variantError;
+      }
       if (!variantRow) return null;
 
       const { data, error } = await client

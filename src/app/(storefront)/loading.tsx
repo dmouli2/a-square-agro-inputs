@@ -8,10 +8,9 @@ export default function HomeLoading() {
           <Skeleton className="h-6 w-56 bg-white/15" />
           <Skeleton className="h-10 w-full bg-white/15" />
           <Skeleton className="h-10 w-3/4 bg-white/15" />
-          <Skeleton className="h-14 w-full max-w-md bg-white/15 rounded-control" />
+          <Skeleton className="h-4 w-full max-w-sm bg-white/15" />
           <div className="flex gap-3 pt-1">
             <Skeleton className="h-12 w-32 bg-white/15" />
-            <Skeleton className="h-12 w-36 bg-white/15" />
           </div>
         </div>
       </section>
@@ -37,7 +36,8 @@ export default function HomeLoading() {
               <Skeleton className="aspect-square rounded-control" />
               <Skeleton className="h-3 w-16" />
               <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full rounded-full mt-1" />
             </div>
           ))}
         </div>

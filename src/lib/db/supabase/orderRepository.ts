@@ -1,11 +1,14 @@
-import { getSupabaseClient } from "@/lib/supabase/client";
+import { getSupabaseClient, isInvalidUuidError } from "@/lib/supabase/client";
 import type { OrderRepository } from "@/lib/db/types";
 import { mapAddress, mapOrder, mapOrderItem } from "./mappers";
 
 async function loadOrder(orderId: string) {
   const client = getSupabaseClient();
   const { data: orderRow, error } = await client.from("orders").select("*").eq("id", orderId).maybeSingle();
-  if (error) throw error;
+  if (error) {
+    if (isInvalidUuidError(error)) return null;
+    throw error;
+  }
   if (!orderRow) return null;
 
   const [{ data: itemRows, error: itemsError }, { data: addressRow, error: addressError }] = await Promise.all([
@@ -28,7 +31,7 @@ export function createSupabaseOrderRepository(): OrderRepository {
         .from("product_variants")
         .select("*, products(name)")
         .in("id", variantIds);
-      if (variantError) throw variantError;
+      if (variantError && !isInvalidUuidError(variantError)) throw variantError;
       if (!variantRows || variantRows.length !== variantIds.length) {
         throw new Error("One or more cart items are no longer available.");
       }

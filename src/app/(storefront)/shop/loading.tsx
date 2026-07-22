@@ -18,7 +18,8 @@ export default function ShopLoading() {
             <Skeleton className="aspect-square rounded-control" />
             <Skeleton className="h-3 w-16" />
             <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-10 w-full rounded-full mt-1" />
           </div>
         ))}
       </div>
