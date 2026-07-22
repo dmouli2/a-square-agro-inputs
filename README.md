@@ -176,7 +176,8 @@ decorative) but reuses the same color/font tokens.
   wired to it yet — see below). Commit author auto-detected as
   `dineshmouli@Dineshs-MacBook-Air.local` rather than a real GitHub email; fix with
   `git config --global user.email` and amend if that matters to you.
-- No automated tests.
+- ~~No automated tests~~ **Done (2026-07-22):** full Vitest + RTL suite, coverage-gated at 90%
+  (`npm run test:coverage`) — see `AGENTS.md` for the policy this repo now follows on every change.
 - CI/CD is **out of scope** (decided 2026-07-22) — deploys are deliberately manual `vercel --prod --yes`; don't re-propose pipelines.
 - No error monitoring (Sentry or similar).
 - No rate-limiting/bot protection on the checkout form (open to spam orders — no CAPTCHA/throttle).
