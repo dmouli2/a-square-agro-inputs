@@ -91,7 +91,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
       {orders === null ? null : orders.length === 0 ? (
         <div className="flex flex-col items-center text-center gap-4 py-10">
-          <span className="text-4xl">📦</span>
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-soil-100 text-4xl">📦</span>
           <p className="text-sm text-muted max-w-xs">
             No orders found for {phone}. If you just placed one, it can take a moment to appear.
           </p>

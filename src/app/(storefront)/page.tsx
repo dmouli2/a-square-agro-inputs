@@ -1,11 +1,12 @@
-import Image from "next/image";
 import { getDb } from "@/lib/db";
 import { getCartMap } from "@/lib/cart";
 import { CategoryShowcase } from "@/components/storefront/CategoryShowcase";
 import { BrandMarquee } from "@/components/storefront/BrandMarquee";
 import { ProductCarousel } from "@/components/storefront/ProductCarousel";
 import { HeroMedia } from "@/components/storefront/HeroMedia";
+import { FarmerPromiseVisual } from "@/components/storefront/FarmerPromiseVisual";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { SoilHorizon } from "@/components/ui/SoilHorizon";
 import { ButtonLink } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
@@ -120,8 +121,10 @@ export default async function HomePage() {
         <CategoryShowcase categories={categories} />
       </section>
 
-      <section className="py-14 bg-primary-50/60">
-        <div className="mx-auto max-w-6xl px-4 grid md:grid-cols-2 gap-10 items-center">
+      <SoilHorizon />
+
+      <section className="py-14 bg-surface">
+        <div className="mx-auto max-w-6xl px-4 grid md:grid-cols-[1fr_1.15fr] gap-10 items-center">
           <ScrollReveal className="flex flex-col gap-4 order-2 md:order-1">
             <span className="text-xs font-semibold tracking-wide uppercase text-primary-700">Our promise to you</span>
             <h2 className="font-display font-bold text-3xl leading-snug text-foreground">
@@ -131,39 +134,31 @@ export default async function HomePage() {
               We started A Square Agro Inputs to close the gap between what farmers actually
               need and what gets pushed on them.
             </p>
-            <ul className="flex flex-col gap-2.5 mt-1">
-              {COMMUNITY_POINTS.map((point) => (
-                <li key={point} className="flex items-start gap-2.5 text-sm text-foreground/90">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-700 text-white text-[11px]">
-                    ✓
-                  </span>
-                  {point}
-                </li>
+            <div role="list" className="flex flex-col gap-2.5 mt-1">
+              {COMMUNITY_POINTS.map((point, i) => (
+                <ScrollReveal key={point} delayMs={i * 80}>
+                  <div role="listitem" className="flex items-start gap-2.5 text-sm text-foreground/90">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-700 text-white text-[11px]">
+                      ✓
+                    </span>
+                    {point}
+                  </div>
+                </ScrollReveal>
               ))}
-            </ul>
+            </div>
             <ButtonLink href="/shop" variant="accent" size="md" className="w-fit mt-2">
               Explore the catalog
             </ButtonLink>
           </ScrollReveal>
 
-          <ScrollReveal delayMs={120} className="relative h-72 md:h-96 order-1 md:order-2">
-            <div
-              aria-hidden
-              className="float-organic-shadow absolute inset-4 md:inset-6 bg-primary-400/30 blur-2xl"
-              style={{ borderRadius: "63% 37% 54% 46% / 43% 47% 53% 57%" }}
+          <ScrollReveal delayMs={120} className="order-1 md:order-2">
+            {/* AI-generated (Pollinations.ai) — see public/images/CREDITS.md for the prompt and
+                the commercial-licensing caveat before this goes past an interim/placeholder use. */}
+            <FarmerPromiseVisual
+              imageSrc="/images/farmer-promise-photo.jpg"
+              imageAlt="A farmer sowing rice seedlings by hand in a flooded paddy field"
+              imagePosition="65% 25%"
             />
-            <div
-              className="float-organic relative h-full w-full overflow-hidden shadow-card-hover"
-              style={{ borderRadius: "63% 37% 54% 46% / 43% 47% 53% 57%" }}
-            >
-              <Image
-                src="/images/trust-farmers-field-v2.jpg"
-                alt="Farmers harvesting vegetables together in a field"
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
-              />
-            </div>
           </ScrollReveal>
         </div>
       </section>

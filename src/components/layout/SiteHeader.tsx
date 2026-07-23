@@ -6,6 +6,13 @@ import { Logo } from "@/components/storefront/Logo";
 import { SearchBar } from "@/components/storefront/SearchBar";
 import { MobileHeaderSearch } from "./MobileHeaderSearch";
 
+const SEARCH_PROMPTS = [
+  "Search seeds…",
+  "Search fertilizers…",
+  "Search crop protection…",
+  "Search farm tools…",
+];
+
 const NAV_LINKS = [
   { href: "/shop", label: "Shop", category: null },
   { href: "/shop?category=seeds", label: "Seeds", category: "seeds" },
@@ -32,7 +39,7 @@ export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
           <Logo />
 
           <div className="flex-1 max-w-md">
-            <SearchBar />
+            <SearchBar defaultValue={searchParams.get("q") ?? ""} animatedPhrases={SEARCH_PROMPTS} />
           </div>
 
           <nav className="hidden lg:flex items-center gap-6 text-sm font-medium ml-auto">

@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafaf9;
+  /* Warm sand, not white — matches --soil-50 below so the whole site sits on the same
+     "from the soil up" ground tone instead of a neutral gray/white page. */
+  --background: #faf2e8;
   --surface: #ffffff;
   --foreground: #10241a;
   --muted: #5b6b63;
@@ -24,6 +26,20 @@
   --accent-400: #ffb648;
   --accent-500: #fa9c1e;
   --accent-600: #e2830a;
+
+  /* Soil — the "from the soil up" earth tone. Reserved for grounded/reference content
+     (technical specs, delivery addresses) and the soil-horizon divider motif, never for
+     interactive controls — those stay on the primary/accent scales. */
+  --soil-50: #faf2e8;
+  --soil-100: #f2e0c9;
+  --soil-200: #e4c39c;
+  --soil-300: #d1a271;
+  --soil-400: #b8814f;
+  --soil-500: #9c6635;
+  --soil-600: #7d4f28;
+  --soil-700: #613c1f;
+  --soil-800: #472b17;
+  --soil-900: #2e1c0f;
 
   --radius-card: 1.25rem;
   --radius-control: 0.75rem;
@@ -55,6 +71,17 @@
   --color-accent-500: var(--accent-500);
   --color-accent-600: var(--accent-600);
 
+  --color-soil-50: var(--soil-50);
+  --color-soil-100: var(--soil-100);
+  --color-soil-200: var(--soil-200);
+  --color-soil-300: var(--soil-300);
+  --color-soil-400: var(--soil-400);
+  --color-soil-500: var(--soil-500);
+  --color-soil-600: var(--soil-600);
+  --color-soil-700: var(--soil-700);
+  --color-soil-800: var(--soil-800);
+  --color-soil-900: var(--soil-900);
+
   --font-sans: var(--font-body);
   --font-display: var(--font-heading);
 
@@ -80,6 +107,30 @@ body {
 }
 .link-underline:hover {
   background-size: 100% 1px;
+}
+
+/* A pair of punched half-circles along the top edge, so the checkout order-summary
+   card reads as a torn-off delivery/COD receipt rather than a plain box. */
+.receipt-notch {
+  position: relative;
+  overflow: visible;
+}
+.receipt-notch::before,
+.receipt-notch::after {
+  content: "";
+  position: absolute;
+  top: -0.65rem;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 9999px;
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+.receipt-notch::before {
+  left: -0.65rem;
+}
+.receipt-notch::after {
+  right: -0.65rem;
 }
 
 /* Hides the scrollbar on horizontally-scrollable carousels/chip rows while

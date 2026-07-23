@@ -10,7 +10,7 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 pb-24 md:pb-10">
       <div className="flex flex-col items-center text-center gap-2 mb-8">
-        <span className="text-4xl">✅</span>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-50 text-4xl">✅</span>
         <h1 className="font-display font-bold text-2xl text-foreground">Order placed!</h1>
         <p className="text-sm text-muted">
           Order <span className="font-medium text-foreground">#{order.id}</span> — we&apos;ll call you to confirm
@@ -53,8 +53,8 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
         </div>
       </div>
 
-      <div className="rounded-card border border-border bg-primary-50/50 p-4 mb-8 text-sm">
-        <span className="font-semibold text-foreground block mb-1">Delivering to</span>
+      <div className="rounded-card border border-soil-300 bg-soil-100 p-4 mb-8 text-sm">
+        <span className="text-xs font-semibold uppercase tracking-wide text-soil-700 block mb-1.5">Delivering to</span>
         <p className="text-muted leading-relaxed">
           {order.shippingAddress.fullName}, {order.shippingAddress.phone}
           <br />

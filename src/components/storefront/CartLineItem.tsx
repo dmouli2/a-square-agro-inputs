@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import Image from "next/image";
 import { removeFromCart, updateCartQuantity } from "@/app/actions/cart";
 
 interface CartLineItemProps {
@@ -10,9 +11,10 @@ interface CartLineItemProps {
   variantLabel: string;
   price: number;
   quantity: number;
+  imageUrl?: string | null;
 }
 
-export function CartLineItem({ variantId, productName, brand, variantLabel, price, quantity }: CartLineItemProps) {
+export function CartLineItem({ variantId, productName, brand, variantLabel, price, quantity, imageUrl }: CartLineItemProps) {
   const [isPending, startTransition] = useTransition();
 
   function setQuantity(next: number) {
@@ -29,8 +31,12 @@ export function CartLineItem({ variantId, productName, brand, variantLabel, pric
 
   return (
     <div className={`flex gap-3 py-4 border-b border-border last:border-0 ${isPending ? "opacity-50" : ""}`}>
-      <div className="h-16 w-16 shrink-0 rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">
-        <span className="font-display font-bold text-lg text-primary-300">{brand.slice(0, 1)}</span>
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">
+        {imageUrl ? (
+          <Image src={imageUrl} alt={productName} fill sizes="64px" className="object-cover" />
+        ) : (
+          <span className="font-display font-bold text-lg text-primary-300">{brand.slice(0, 1)}</span>
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <span className="text-xs font-medium text-muted uppercase tracking-wide">{brand}</span>

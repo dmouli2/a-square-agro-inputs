@@ -51,15 +51,16 @@ interface FieldProps {
   maxLength?: number;
   required?: boolean;
   error?: string | null;
+  hint?: string;
   onBlur: (e: FocusEvent<HTMLInputElement>) => void;
   className?: string;
 }
 
-function Field({ name, label, placeholder, type = "text", inputMode, maxLength, required, error, onBlur, className }: FieldProps) {
+function Field({ name, label, placeholder, type = "text", inputMode, maxLength, required, error, hint, onBlur, className }: FieldProps) {
   const inputId = `checkout-${name}`;
   return (
     <div className={className}>
-      <label htmlFor={inputId} className="block text-xs font-medium text-muted mb-1">
+      <label htmlFor={inputId} className="block text-[13px] font-medium text-foreground/80 mb-1">
         {label}
         {!required && " (optional)"}
       </label>
@@ -76,10 +77,12 @@ function Field({ name, label, placeholder, type = "text", inputMode, maxLength, 
         aria-describedby={error ? `${inputId}-error` : undefined}
         className={fieldClass(Boolean(error))}
       />
-      {error && (
+      {error ? (
         <p id={`${inputId}-error`} className="mt-1 text-xs text-red-600">
           {error}
         </p>
+      ) : (
+        hint && <p className="mt-1 text-xs text-muted">{hint}</p>
       )}
     </div>
   );
@@ -115,7 +118,7 @@ function SelectField({
   const inputId = `checkout-${name}`;
   return (
     <div className={className}>
-      <label htmlFor={inputId} className="block text-xs font-medium text-muted mb-1">
+      <label htmlFor={inputId} className="block text-[13px] font-medium text-foreground/80 mb-1">
         {label}
         {!required && " (optional)"}
       </label>
@@ -186,10 +189,11 @@ export function CheckoutForm({ subtotal }: { subtotal: number }) {
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-6">
+    <form action={formAction} className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,1fr)_22rem] md:items-start md:gap-8">
       <section className="rounded-card border border-border bg-surface p-4 flex flex-col gap-4">
-        <h2 className="font-display font-bold text-lg text-foreground flex items-center gap-2">
-          <span aria-hidden>📍</span> Delivery details
+        <h2 className="font-display font-bold text-lg text-foreground flex items-center gap-2.5">
+          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-base">📍</span>
+          Delivery details
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <Field name="fullName" label="Full name" placeholder="e.g. Ravi Kumar" required error={errorFor("fullName")} onBlur={handleBlur} className="sm:col-span-2" />
@@ -202,6 +206,7 @@ export function CheckoutForm({ subtotal }: { subtotal: number }) {
             maxLength={10}
             required
             error={errorFor("phone")}
+            hint="We'll call this number to confirm your order."
             onBlur={handleBlur}
             className="sm:col-span-2"
           />
@@ -248,51 +253,57 @@ export function CheckoutForm({ subtotal }: { subtotal: number }) {
         </div>
       </section>
 
-      <section className="rounded-card border border-border bg-surface p-4 flex flex-col gap-2">
-        <h2 className="font-display font-bold text-lg text-foreground flex items-center gap-2 mb-1">
-          <span aria-hidden>🧾</span> Order summary
-        </h2>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted">Subtotal</span>
-          <span className="text-foreground">{inr(subtotal)}</span>
-        </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted">Delivery</span>
-          <span className="text-primary-700 font-medium">Free</span>
-        </div>
-        <div className="border-t border-border mt-1 pt-2 flex items-center justify-between">
-          <span className="font-medium text-foreground">Total</span>
-          <span className="font-display font-bold text-lg text-foreground">{inr(subtotal)}</span>
-        </div>
-      </section>
+      <div className="flex flex-col gap-4 md:sticky md:top-24">
+        <section className="receipt-notch rounded-card border border-border bg-surface p-4 flex flex-col gap-2">
+          <h2 className="font-display font-bold text-lg text-foreground flex items-center gap-2.5 mb-1">
+            <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-base">🧾</span>
+            Order summary
+          </h2>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted">Subtotal</span>
+            <span className="text-foreground">{inr(subtotal)}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted">Delivery</span>
+            <span className="text-primary-700 font-medium">Free</span>
+          </div>
+          <div className="border-t border-border mt-1 pt-2 flex items-center justify-between">
+            <span className="font-medium text-foreground">Total</span>
+            <span className="font-display font-bold text-lg text-foreground">{inr(subtotal)}</span>
+          </div>
 
-      <div className="flex flex-col gap-2 text-sm text-muted">
-        <p className="flex items-center gap-2">
-          <span aria-hidden>💰</span> Cash on Delivery — pay when it arrives.
-        </p>
-        <p className="flex items-center gap-2">
-          <span aria-hidden>🚚</span> Doorstep delivery, even to your village.
-        </p>
-        <p className="flex items-center gap-2">
-          <span aria-hidden>🔒</span> Your details are only used to deliver this order.
-        </p>
-      </div>
+          <div className="flex flex-col gap-2.5 border-t border-dashed border-border mt-2 pt-3">
+            <p className="flex items-center gap-2.5 text-sm text-muted">
+              <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-50 text-sm">💰</span>
+              Cash on Delivery — pay when it arrives.
+            </p>
+            <p className="flex items-center gap-2.5 text-sm text-muted">
+              <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-50 text-sm">🚚</span>
+              Doorstep delivery, even to your village.
+            </p>
+            <p className="flex items-center gap-2.5 text-sm text-muted">
+              <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-50 text-sm">🔒</span>
+              Your details are only used to deliver this order.
+            </p>
+          </div>
+        </section>
 
-      {state.error && (
-        <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-control px-3.5 py-2.5">
-          {state.error}
-        </p>
-      )}
+        {state.error && (
+          <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-control px-3.5 py-2.5">
+            {state.error}
+          </p>
+        )}
 
-      <div className="fixed bottom-16 inset-x-0 z-30 border-t border-border bg-surface/95 backdrop-blur px-4 py-3 md:static md:z-auto md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
-        <div className="mx-auto max-w-2xl flex items-center gap-3 md:block">
-          <span className="flex-1 md:hidden">
-            <span className="block text-xs text-muted">Total</span>
-            <span className="block font-display font-bold text-foreground">{inr(subtotal)}</span>
-          </span>
-          <Button type="submit" size="lg" disabled={isPending} className="w-full md:w-full">
-            {isPending ? "Placing order…" : `Place order (Cash on Delivery)`}
-          </Button>
+        <div className="fixed bottom-16 inset-x-0 z-30 border-t border-border bg-surface/95 backdrop-blur px-4 py-3 md:static md:z-auto md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+          <div className="mx-auto max-w-2xl flex items-center gap-3 md:block md:max-w-none">
+            <span className="flex-1 md:hidden">
+              <span className="block text-xs text-muted">Total</span>
+              <span className="block font-display font-bold text-foreground">{inr(subtotal)}</span>
+            </span>
+            <Button type="submit" size="lg" disabled={isPending} className="w-full">
+              {isPending ? "Placing order…" : `Place order (Cash on Delivery)`}
+            </Button>
+          </div>
         </div>
       </div>
     </form>

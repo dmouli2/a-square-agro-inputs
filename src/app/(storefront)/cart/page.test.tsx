@@ -4,6 +4,7 @@ import { makeProduct } from "@/test/fixtures";
 
 const getCartMap = vi.fn();
 const findByVariantId = vi.fn();
+const listCategories = vi.fn();
 
 vi.mock("@/lib/cart", () => ({
   getCartMap: (...args: unknown[]) => getCartMap(...args),
@@ -12,6 +13,13 @@ vi.mock("@/lib/cart", () => ({
 vi.mock("@/lib/db", () => ({
   getDb: () => ({
     products: { findByVariantId },
+    categories: { list: listCategories },
+  }),
+}));
+
+vi.mock("@/lib/storage", () => ({
+  getImageStorage: () => ({
+    getPublicUrl: (path: string) => `https://cdn.example.com/${path}`,
   }),
 }));
 
@@ -31,6 +39,8 @@ describe("CartPage", () => {
   beforeEach(() => {
     getCartMap.mockReset();
     findByVariantId.mockReset();
+    listCategories.mockReset();
+    listCategories.mockResolvedValue([]);
   });
 
   it("renders an empty-cart state when the cart cookie has no entries", async () => {

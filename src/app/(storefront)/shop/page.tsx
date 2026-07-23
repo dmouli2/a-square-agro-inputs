@@ -2,7 +2,6 @@ import Link from "next/link";
 import { getDb } from "@/lib/db";
 import { getCartMap } from "@/lib/cart";
 import { ProductCard } from "@/components/storefront/ProductCard";
-import { SearchBar } from "@/components/storefront/SearchBar";
 
 export default async function ShopPage({
   searchParams,
@@ -21,10 +20,6 @@ export default async function ShopPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 pb-24 md:pb-8">
-      <div className="hidden md:block mb-5">
-        <SearchBar defaultValue={q} />
-      </div>
-
       <div className="mb-6">
         {q ? (
           <>
@@ -77,9 +72,12 @@ export default async function ShopPage({
       </div>
 
       {products.length === 0 ? (
-        <p className="text-muted text-sm py-12 text-center">
-          {q ? "No products matched your search." : "No products in this category yet."}
-        </p>
+        <div className="flex flex-col items-center text-center gap-3 py-12">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-soil-100 text-2xl">🌱</span>
+          <p className="text-muted text-sm max-w-xs">
+            {q ? "No products matched your search." : "No products in this category yet."}
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {products.map((product) => (

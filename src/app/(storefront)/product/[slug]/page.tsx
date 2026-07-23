@@ -72,7 +72,8 @@ export default async function ProductDetailPage({
           )}
 
           {hasComplianceInfo && (
-            <div className="rounded-card border border-border bg-primary-50/50 p-4 flex flex-col gap-1.5 text-sm">
+            <div className="rounded-card border border-soil-300 bg-soil-100 p-4 flex flex-col gap-1.5 text-sm">
+              <span className="text-xs font-semibold uppercase tracking-wide text-soil-700 mb-1">Product details</span>
               {product.activeIngredient && (
                 <div className="flex justify-between gap-4">
                   <span className="text-muted">Active ingredient</span>

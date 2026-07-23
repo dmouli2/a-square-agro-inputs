@@ -1,5 +1,7 @@
 import { getDb } from "@/lib/db";
 import { getCartMap } from "@/lib/cart";
+import { getImageStorage } from "@/lib/storage";
+import { getCategoryFallbackImage } from "@/lib/categoryImages";
 import { CartLineItem } from "@/components/storefront/CartLineItem";
 import { CartCleanup } from "@/components/storefront/CartCleanup";
 import { CheckoutForm } from "@/components/storefront/CheckoutForm";
@@ -52,23 +54,32 @@ export default async function CartPage() {
 
   const subtotal = resolved.reduce((sum, item) => sum + item.variant.price * item.quantity, 0);
 
+  const categories = await db.categories.list();
+  const categorySlugById = new Map(categories.map((c) => [c.id, c.slug]));
+  const imageStorage = getImageStorage();
+
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 pb-40 md:pb-8">
+    <div className="mx-auto max-w-2xl md:max-w-5xl px-4 py-8 pb-40 md:pb-8">
       {staleVariantIds.length > 0 && <CartCleanup staleVariantIds={staleVariantIds} />}
       <h1 className="font-display font-bold text-2xl text-foreground mb-6">Your cart</h1>
 
       <div className="rounded-card border border-border bg-surface px-4 mb-6">
-        {resolved.map((item) => (
-          <CartLineItem
-            key={item.variantId}
-            variantId={item.variantId}
-            productName={item.product.name}
-            brand={item.product.brand}
-            variantLabel={item.variant.label}
-            price={item.variant.price}
-            quantity={item.quantity}
-          />
-        ))}
+        {resolved.map((item) => {
+          const ownImage = item.product.images[0] ? imageStorage.getPublicUrl(item.product.images[0]) : null;
+          const fallbackImage = getCategoryFallbackImage(categorySlugById.get(item.product.categoryId));
+          return (
+            <CartLineItem
+              key={item.variantId}
+              variantId={item.variantId}
+              productName={item.product.name}
+              brand={item.product.brand}
+              variantLabel={item.variant.label}
+              price={item.variant.price}
+              quantity={item.quantity}
+              imageUrl={ownImage ?? fallbackImage}
+            />
+          );
+        })}
       </div>
 
       <CheckoutForm subtotal={subtotal} />
