@@ -142,18 +142,13 @@ describe("CheckoutForm", () => {
     expect(await screen.findByText("Enter your district.")).toBeInTheDocument();
   });
 
-  it("surfaces a server-side field error for a field the shopper hasn't blurred locally", async () => {
-    vi.mocked(placeOrder).mockResolvedValue({
-      error: "Please fix the highlighted fields below.",
-      fieldErrors: { pincode: "Enter a valid 6-digit pincode." },
-    });
+  it("catches an invalid untouched field on submit without needing a server round trip", async () => {
     const user = userEvent.setup();
     render(<CheckoutForm subtotal={500} />);
 
     // Fill every required field via keyboard/selection except pincode, which is set via
-    // fireEvent so it's never focused/blurred by this test — the click on submit blurs
-    // "District" (the last field the user actually interacted with), not pincode, so
-    // touched.pincode stays false and the lookup must fall back to the server's fieldErrors.
+    // fireEvent so it's never focused/blurred by this test — submit's own full-form check
+    // (handleSubmit) must catch the bad pincode itself, without placeOrder ever running.
     await user.type(screen.getByLabelText("Full name"), "Ravi Kumar");
     await user.type(screen.getByLabelText("Phone number"), "9876543210");
     await user.type(screen.getByLabelText("House / street"), "12 Main Road");
@@ -163,6 +158,41 @@ describe("CheckoutForm", () => {
     await user.click(screen.getByRole("button", { name: "Place order (Cash on Delivery)" }));
 
     expect(await screen.findByText("Enter a valid 6-digit pincode.")).toBeInTheDocument();
+    expect(placeOrder).not.toHaveBeenCalled();
+  });
+
+  it("scrolls to and focuses the first empty required field when submitted blank", async () => {
+    const user = userEvent.setup();
+    render(<CheckoutForm subtotal={500} />);
+
+    await user.click(screen.getByRole("button", { name: "Place order (Cash on Delivery)" }));
+
+    expect(await screen.findByText("Enter your full name.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Full name")).toHaveFocus();
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
+    expect(placeOrder).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a server-side field error for a validation the client doesn't replicate", async () => {
+    vi.mocked(placeOrder).mockResolvedValue({
+      error: "Please fix the highlighted fields below.",
+      fieldErrors: { pincode: "We don't currently deliver to this pincode." },
+    });
+    const user = userEvent.setup();
+    render(<CheckoutForm subtotal={500} />);
+
+    await user.type(screen.getByLabelText("Full name"), "Ravi Kumar");
+    await user.type(screen.getByLabelText("Phone number"), "9876543210");
+    await user.type(screen.getByLabelText("House / street"), "12 Main Road");
+    await user.selectOptions(screen.getByLabelText("State"), "Tamil Nadu");
+    await user.selectOptions(screen.getByLabelText("District"), "Salem");
+    // Set via fireEvent (not user.type), so this field is never blurred/touched locally.
+    // It's syntactically valid, so handleSubmit's own check lets the submission through,
+    // and only the server's fieldErrors can surface a non-format problem with it.
+    fireEvent.change(screen.getByLabelText("Pincode"), { target: { value: "636001" } });
+    await user.click(screen.getByRole("button", { name: "Place order (Cash on Delivery)" }));
+
+    expect(await screen.findByText("We don't currently deliver to this pincode.")).toBeInTheDocument();
   });
 
   it("shows the server error banner after a failed submit", async () => {

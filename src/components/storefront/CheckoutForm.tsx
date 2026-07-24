@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, type FocusEvent } from "react";
+import { useActionState, useState, type FocusEvent, type FormEvent } from "react";
 import { placeOrder, type CheckoutState } from "@/app/actions/checkout";
 import { Button } from "@/components/ui/Button";
 import { INDIA_STATES, INDIA_STATES_AND_DISTRICTS } from "@/lib/indiaLocations";
@@ -33,6 +33,10 @@ function validateField(name: string, value: string): string | null {
       return null;
   }
 }
+
+// Top-to-bottom DOM order of the required fields, so "first invalid field" scrolling
+// lands on whichever one the shopper would actually reach first while scrolling down.
+const REQUIRED_FIELDS = ["fullName", "phone", "line1", "state", "district", "pincode"];
 
 function fieldClass(hasError: boolean) {
   // text-base (16px), not text-sm — iOS Safari auto-zooms the viewport when a
@@ -191,11 +195,37 @@ export function CheckoutForm({ subtotal }: { subtotal: number }) {
     return state.fieldErrors?.[name] ?? null;
   }
 
+  // Validates every required field up front on submit and, if anything's missing, scrolls
+  // (and focuses) the first offender instead of silently doing nothing — previously a shopper
+  // scrolled past the top of the form would click "Place order" and see no visible reaction
+  // until they happened to scroll back down to a red-outlined field. preventDefault() here
+  // stops the action prop from firing at all, per React's documented onSubmit+action behavior.
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    const formData = new FormData(e.currentTarget);
+    const errors: Record<string, string | null> = {};
+    let firstInvalid: string | null = null;
+    for (const name of REQUIRED_FIELDS) {
+      const value = (formData.get(name) as string | null) ?? "";
+      const error = validateField(name, value);
+      errors[name] = error;
+      if (error && !firstInvalid) firstInvalid = name;
+    }
+    if (!firstInvalid) return;
+
+    e.preventDefault();
+    setTouched((prev) => ({ ...prev, ...Object.fromEntries(REQUIRED_FIELDS.map((name) => [name, true])) }));
+    setClientErrors((prev) => ({ ...prev, ...errors }));
+
+    const field = document.getElementById(`checkout-${firstInvalid}`);
+    field?.scrollIntoView({ behavior: "smooth", block: "center" });
+    field?.focus({ preventScroll: true });
+  }
+
   return (
     // noValidate: this form already has its own styled inline validation (touched-state +
     // server fieldErrors below) — without it, the browser's native required-field validation
     // jumps focus to the first empty field on submit, which zooms/breaks the layout on iOS.
-    <form noValidate action={formAction} className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,1fr)_22rem] md:items-start md:gap-8">
+    <form noValidate action={formAction} onSubmit={handleSubmit} className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,1fr)_22rem] md:items-start md:gap-8">
       <section className="rounded-card border border-border bg-surface p-4 flex flex-col gap-4">
         <h2 className="font-display font-bold text-lg text-foreground flex items-center gap-2.5">
           <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-base">📍</span>

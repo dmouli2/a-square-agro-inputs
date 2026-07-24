@@ -102,6 +102,10 @@ if (typeof window !== "undefined") {
   // vi.spyOn(...).mockRejectedValueOnce(...) to simulate a blocked-autoplay browser.
   HTMLMediaElement.prototype.play = vi.fn(() => Promise.resolve());
   HTMLMediaElement.prototype.pause = vi.fn();
+
+  // jsdom doesn't implement scrollIntoView either — stub it as a no-op so components that
+  // scroll a field into view on validation (e.g. CheckoutForm) don't log "Not implemented".
+  Element.prototype.scrollIntoView = vi.fn();
 }
 
 beforeEach(() => {
