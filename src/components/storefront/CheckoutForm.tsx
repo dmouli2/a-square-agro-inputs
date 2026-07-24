@@ -35,7 +35,10 @@ function validateField(name: string, value: string): string | null {
 }
 
 function fieldClass(hasError: boolean) {
-  return `h-11 w-full rounded-control border bg-surface px-3.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 ${
+  // text-base (16px), not text-sm — iOS Safari auto-zooms the viewport when a
+  // focused input's font-size is under 16px, which happened here every time
+  // native required-field validation jumped focus to an empty field on submit.
+  return `h-11 w-full rounded-control border bg-surface px-3.5 text-base text-foreground placeholder:text-muted focus:outline-none focus:ring-2 ${
     hasError
       ? "border-red-300 focus:ring-red-200 focus:border-red-500"
       : "border-border focus:ring-primary-300 focus:border-primary-500"
@@ -189,7 +192,10 @@ export function CheckoutForm({ subtotal }: { subtotal: number }) {
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,1fr)_22rem] md:items-start md:gap-8">
+    // noValidate: this form already has its own styled inline validation (touched-state +
+    // server fieldErrors below) — without it, the browser's native required-field validation
+    // jumps focus to the first empty field on submit, which zooms/breaks the layout on iOS.
+    <form noValidate action={formAction} className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,1fr)_22rem] md:items-start md:gap-8">
       <section className="rounded-card border border-border bg-surface p-4 flex flex-col gap-4">
         <h2 className="font-display font-bold text-lg text-foreground flex items-center gap-2.5">
           <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-base">📍</span>
