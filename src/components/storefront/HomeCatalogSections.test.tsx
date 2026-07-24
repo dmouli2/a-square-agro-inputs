@@ -80,8 +80,7 @@ describe("HomeCatalogSections", () => {
     const jsx = await HomeCatalogSections();
     render(jsx);
 
-    expect(screen.getByText("Genuine products from brands you already trust")).toBeInTheDocument();
-    expect(screen.getAllByText("IFFCO").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("Brands we stock: Bayer, IFFCO, Tata Rallis")).toBeInTheDocument();
   });
 
   it("hides the brand marquee with fewer than 3 distinct brands", async () => {
@@ -91,7 +90,7 @@ describe("HomeCatalogSections", () => {
     const jsx = await HomeCatalogSections();
     render(jsx);
 
-    expect(screen.queryByText("Genuine products from brands you already trust")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Brands we stock/)).not.toBeInTheDocument();
   });
 
   it("renders with no categories and no products", async () => {

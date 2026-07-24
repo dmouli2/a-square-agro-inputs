@@ -24,10 +24,7 @@ export async function HomeCatalogSections() {
     <>
       {hasEnoughBrandsForMarquee && (
         <section className="py-6 border-b border-border">
-          <ScrollReveal className="mx-auto max-w-6xl px-4 flex flex-col gap-3">
-            <span className="text-center text-xs font-medium text-muted uppercase tracking-wide">
-              Genuine products from brands you already trust
-            </span>
+          <ScrollReveal className="mx-auto max-w-6xl px-4">
             <BrandMarquee brands={brands} />
           </ScrollReveal>
         </section>

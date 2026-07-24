@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { HeroMedia } from "./HeroMedia";
 
 function mockMatchMedia(reducedMotion: boolean) {
@@ -59,16 +59,20 @@ describe("HeroMedia", () => {
     expect(screen.queryByTestId("hero-video")).not.toBeInTheDocument();
   });
 
-  it("loads the video on a good connection with no reduced-motion preference, and fades it in once playable", () => {
+  it("loads the video on a good connection with no reduced-motion preference, calls play() once playable, and fades it in once actually playing", async () => {
     mockConnection({ effectiveType: "4g" });
     render(<HeroMedia posterSrc="/images/hero.jpg" posterAlt="Field" videoSrc="/videos/hero.webm" />);
 
-    const video = screen.getByTestId("hero-video");
+    const video = screen.getByTestId("hero-video") as HTMLVideoElement;
     expect(video).toHaveAttribute("src", "/videos/hero.webm");
     expect(video).toHaveClass("opacity-0");
 
     fireEvent.canPlay(video);
+    expect(video.play).toHaveBeenCalled();
+
+    fireEvent.playing(video);
     expect(video).toHaveClass("opacity-100");
+    expect(screen.queryByRole("button", { name: "Play background video" })).not.toBeInTheDocument();
   });
 
   it("keeps the poster visible (video stays hidden) if the video errors out", () => {
@@ -77,10 +81,29 @@ describe("HeroMedia", () => {
 
     const video = screen.getByTestId("hero-video");
     fireEvent.canPlay(video);
+    fireEvent.playing(video);
     expect(video).toHaveClass("opacity-100");
 
     fireEvent.error(video);
     expect(video).toHaveClass("opacity-0");
+  });
+
+  it("shows a tap-to-play button when the browser blocks autoplay, and starts playback on click", async () => {
+    mockConnection({ effectiveType: "4g" });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockRejectedValueOnce(new DOMException("blocked", "NotAllowedError"));
+    render(<HeroMedia posterSrc="/images/hero.jpg" posterAlt="Field" videoSrc="/videos/hero.webm" />);
+
+    const video = screen.getByTestId("hero-video");
+    fireEvent.canPlay(video);
+
+    const playButton = await screen.findByRole("button", { name: "Play background video" });
+
+    vi.mocked(HTMLMediaElement.prototype.play).mockResolvedValueOnce(undefined);
+    fireEvent.click(playButton);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Play background video" })).not.toBeInTheDocument());
+
+    fireEvent.playing(video);
+    expect(video).toHaveClass("opacity-100");
   });
 
   it("treats an unsupported Network Information API as fine and still loads the video", () => {

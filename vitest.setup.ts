@@ -95,6 +95,13 @@ if (typeof window !== "undefined") {
       dispatchEvent: vi.fn(),
     })),
   });
+
+  // jsdom doesn't implement real media playback — HTMLMediaElement.play()/pause() throw
+  // "Not implemented" by default. Stub play() to resolve so components that call it
+  // (e.g. HeroMedia's autoplay-with-fallback) don't crash; individual tests can
+  // vi.spyOn(...).mockRejectedValueOnce(...) to simulate a blocked-autoplay browser.
+  HTMLMediaElement.prototype.play = vi.fn(() => Promise.resolve());
+  HTMLMediaElement.prototype.pause = vi.fn();
 }
 
 beforeEach(() => {
