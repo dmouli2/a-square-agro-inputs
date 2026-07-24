@@ -160,30 +160,33 @@ describe("createSupabaseOrderRepository", () => {
     await expect(repo.create(orderInput)).rejects.toThrow("items failed");
   });
 
-  it("list returns every order newest-first, loading items and address for each", async () => {
+  it("list returns every order newest-first, batch-loading items/addresses for the whole page in one query each", async () => {
     from.mockImplementation((table: string) => {
-      if (table === "orders") return fakeQuery({ data: [{ id: "o1" }], error: null });
+      if (table === "orders") return fakeQuery({ data: [orderRow], error: null });
       if (table === "order_items") return fakeQuery({ data: [itemRow], error: null });
-      if (table === "addresses") return fakeQuery({ data: addressRow, error: null });
+      if (table === "addresses") return fakeQuery({ data: [addressRow], error: null });
       throw new Error(`unexpected table ${table}`);
     });
     vi.mocked(getSupabaseClient).mockReturnValue({ from } as never);
-    // loadOrder needs the order row itself too
-    const ordersQuery = fakeQuery({ data: [{ id: "o1" }], error: null });
-    let listCall = 0;
-    from.mockImplementation((table: string) => {
-      if (table === "orders") {
-        listCall += 1;
-        return listCall === 1 ? ordersQuery : fakeQuery({ data: orderRow, error: null });
-      }
-      if (table === "order_items") return fakeQuery({ data: [itemRow], error: null });
-      if (table === "addresses") return fakeQuery({ data: addressRow, error: null });
-      throw new Error(`unexpected table ${table}`);
-    });
     const repo = createSupabaseOrderRepository();
     const result = await repo.list();
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("o1");
+    expect(result[0].items).toHaveLength(1);
+    expect(result[0].shippingAddress.id).toBe("a1");
+    // one query per table, not one per order
+    expect(from).toHaveBeenCalledTimes(3);
+  });
+
+  it("list returns an empty array without querying items/addresses when there are no orders", async () => {
+    from.mockImplementation((table: string) => {
+      if (table === "orders") return fakeQuery({ data: [], error: null });
+      throw new Error(`unexpected table ${table}`);
+    });
+    vi.mocked(getSupabaseClient).mockReturnValue({ from } as never);
+    const repo = createSupabaseOrderRepository();
+    expect(await repo.list()).toEqual([]);
+    expect(from).toHaveBeenCalledTimes(1);
   });
 
   it("list throws when the orders query itself errors", async () => {
@@ -191,6 +194,30 @@ describe("createSupabaseOrderRepository", () => {
     vi.mocked(getSupabaseClient).mockReturnValue({ from } as never);
     const repo = createSupabaseOrderRepository();
     await expect(repo.list()).rejects.toThrow("list failed");
+  });
+
+  it("list throws when the batched order_items query errors", async () => {
+    from.mockImplementation((table: string) => {
+      if (table === "orders") return fakeQuery({ data: [orderRow], error: null });
+      if (table === "order_items") return fakeQuery({ data: null, error: { message: "items failed" } });
+      if (table === "addresses") return fakeQuery({ data: [addressRow], error: null });
+      throw new Error(`unexpected table ${table}`);
+    });
+    vi.mocked(getSupabaseClient).mockReturnValue({ from } as never);
+    const repo = createSupabaseOrderRepository();
+    await expect(repo.list()).rejects.toThrow("items failed");
+  });
+
+  it("list throws when the batched addresses query errors", async () => {
+    from.mockImplementation((table: string) => {
+      if (table === "orders") return fakeQuery({ data: [orderRow], error: null });
+      if (table === "order_items") return fakeQuery({ data: [itemRow], error: null });
+      if (table === "addresses") return fakeQuery({ data: null, error: { message: "address failed" } });
+      throw new Error(`unexpected table ${table}`);
+    });
+    vi.mocked(getSupabaseClient).mockReturnValue({ from } as never);
+    const repo = createSupabaseOrderRepository();
+    await expect(repo.list()).rejects.toThrow("address failed");
   });
 
   it("findById returns null when the order row doesn't exist", async () => {
@@ -247,18 +274,14 @@ describe("createSupabaseOrderRepository", () => {
 
   it("listByPhone returns the matching customer's orders", async () => {
     let customersCall = false;
-    let ordersCall = 0;
     from.mockImplementation((table: string) => {
       if (table === "customers") {
         customersCall = true;
         return fakeQuery({ data: { id: "cu1" }, error: null });
       }
-      if (table === "orders") {
-        ordersCall += 1;
-        return ordersCall === 1 ? fakeQuery({ data: [{ id: "o1" }], error: null }) : fakeQuery({ data: orderRow, error: null });
-      }
+      if (table === "orders") return fakeQuery({ data: [orderRow], error: null });
       if (table === "order_items") return fakeQuery({ data: [itemRow], error: null });
-      if (table === "addresses") return fakeQuery({ data: addressRow, error: null });
+      if (table === "addresses") return fakeQuery({ data: [addressRow], error: null });
       throw new Error(`unexpected table ${table}`);
     });
     vi.mocked(getSupabaseClient).mockReturnValue({ from } as never);

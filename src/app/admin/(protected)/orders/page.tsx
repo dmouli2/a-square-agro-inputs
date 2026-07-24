@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getDb } from "@/lib/db";
 import { Pagination } from "@/components/admin/Pagination";
 import { paginate, parsePage } from "@/lib/pagination";
+import { shortOrderId } from "@/lib/orderId";
 
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-amber-50 text-amber-700",
@@ -70,8 +71,12 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
             {orders.map((order) => (
               <tr key={order.id} className="border-b border-border last:border-0 hover:bg-primary-50/40">
                 <td className="px-4 py-3">
-                  <Link href={`/admin/orders/${order.id}`} className="font-medium text-foreground hover:text-primary-700">
-                    #{order.id}
+                  <Link
+                    href={`/admin/orders/${order.id}`}
+                    title={order.id}
+                    className="font-medium text-foreground hover:text-primary-700"
+                  >
+                    #{shortOrderId(order.id)}
                   </Link>
                 </td>
                 <td className="px-4 py-3">

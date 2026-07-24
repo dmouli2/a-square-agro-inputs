@@ -1,5 +1,6 @@
 import { getSupabaseClient, isInvalidUuidError } from "@/lib/supabase/client";
 import type { OrderRepository } from "@/lib/db/types";
+import type { Order } from "@/types";
 import { mapAddress, mapOrder, mapOrderItem } from "./mappers";
 
 async function loadOrder(orderId: string) {
@@ -19,6 +20,38 @@ async function loadOrder(orderId: string) {
   if (addressError) throw addressError;
 
   return mapOrder(orderRow, (itemRows ?? []).map(mapOrderItem), mapAddress(addressRow));
+}
+
+// Batch-loads items/addresses for a whole page of orders in 2 queries total
+// instead of loadOrder()'s 2-per-order — list()/listByPhone() used to call
+// loadOrder() once per row (an extra order re-fetch plus its own items/address
+// round trips each), which made the admin dashboard and orders list do
+// 1 + 3*N Supabase round trips on every load.
+async function assembleOrders(orderRows: Record<string, unknown>[]): Promise<Order[]> {
+  if (orderRows.length === 0) return [];
+  const client = getSupabaseClient();
+  const orderIds = orderRows.map((row) => row.id as string);
+  const addressIds = orderRows.map((row) => row.shipping_address_id as string);
+
+  const [{ data: itemRows, error: itemsError }, { data: addressRows, error: addressError }] = await Promise.all([
+    client.from("order_items").select("*").in("order_id", orderIds),
+    client.from("addresses").select("*").in("id", addressIds),
+  ]);
+  if (itemsError) throw itemsError;
+  if (addressError) throw addressError;
+
+  const itemsByOrderId = new Map<string, ReturnType<typeof mapOrderItem>[]>();
+  for (const row of itemRows ?? []) {
+    const item = mapOrderItem(row);
+    const existing = itemsByOrderId.get(item.orderId);
+    if (existing) existing.push(item);
+    else itemsByOrderId.set(item.orderId, [item]);
+  }
+  const addressById = new Map((addressRows ?? []).map((row) => [row.id as string, mapAddress(row)]));
+
+  return orderRows.map((row) =>
+    mapOrder(row, itemsByOrderId.get(row.id as string) ?? [], addressById.get(row.shipping_address_id as string)!)
+  );
 }
 
 export function createSupabaseOrderRepository(): OrderRepository {
@@ -119,12 +152,11 @@ export function createSupabaseOrderRepository(): OrderRepository {
       const client = getSupabaseClient();
       const { data: orderRows, error } = await client
         .from("orders")
-        .select("id")
+        .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
-      const orders = await Promise.all((orderRows ?? []).map((row) => loadOrder(row.id as string)));
-      return orders.filter((o) => o !== null);
+      return assembleOrders(orderRows ?? []);
     },
 
     async findById(id) {
@@ -138,13 +170,12 @@ export function createSupabaseOrderRepository(): OrderRepository {
 
       const { data: orderRows, error } = await client
         .from("orders")
-        .select("id")
+        .select("*")
         .eq("customer_id", customerRow.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
 
-      const orders = await Promise.all((orderRows ?? []).map((row) => loadOrder(row.id as string)));
-      return orders.filter((o) => o !== null);
+      return assembleOrders(orderRows ?? []);
     },
 
     async updateStatus(id, status) {

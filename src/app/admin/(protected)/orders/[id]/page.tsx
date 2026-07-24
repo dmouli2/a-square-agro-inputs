@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db";
-import { updateOrderStatus } from "@/app/actions/adminOrders";
+import { OrderStatusForm } from "@/components/admin/OrderStatusForm";
+import { shortOrderId } from "@/lib/orderId";
 import { buildWaLink, customerWaNumber, statusUpdateMessage } from "@/lib/whatsapp";
-
-const STATUS_OPTIONS = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "returned"];
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,31 +12,15 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
       <div>
-        <h1 className="font-display font-bold text-2xl text-foreground">Order #{order.id}</h1>
+        <h1 className="font-display font-bold text-2xl text-foreground" title={order.id}>
+          Order #{shortOrderId(order.id)}
+        </h1>
         <p className="text-sm text-muted mt-1">Placed {new Date(order.createdAt).toLocaleString("en-IN")}</p>
       </div>
 
       <div className="rounded-card border border-border bg-surface p-4 flex items-center gap-3">
         <span className="text-sm font-medium text-foreground">Status</span>
-        <form action={updateOrderStatus.bind(null, order.id)} className="flex items-center gap-2">
-          <select
-            name="status"
-            defaultValue={order.status}
-            className="h-10 rounded-control border border-border bg-surface px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary-300"
-          >
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s} className="capitalize">
-                {s}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="h-10 rounded-control bg-primary-700 text-white text-sm font-medium px-4 hover:bg-primary-800"
-          >
-            Update
-          </button>
-        </form>
+        <OrderStatusForm orderId={order.id} initialStatus={order.status} />
         <a
           href={buildWaLink(customerWaNumber(order.shippingAddress.phone), statusUpdateMessage(order))}
           target="_blank"

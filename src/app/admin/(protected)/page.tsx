@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getDb } from "@/lib/db";
 import { revenueTrend, topSellers, statusBreakdown } from "@/lib/analytics";
+import { shortOrderId } from "@/lib/orderId";
 
 const inr = (value: number) =>
   value.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -165,9 +166,10 @@ export default async function AdminDashboardPage() {
               <Link
                 key={order.id}
                 href={`/admin/orders/${order.id}`}
+                title={order.id}
                 className="flex items-center justify-between py-2.5 text-sm hover:bg-primary-50/50 -mx-2 px-2 rounded-control"
               >
-                <span className="font-medium text-foreground">#{order.id}</span>
+                <span className="font-medium text-foreground">#{shortOrderId(order.id)}</span>
                 <span className="text-muted">{order.shippingAddress.fullName}</span>
                 <span className="capitalize text-primary-700">{order.status}</span>
                 <span className="font-medium text-foreground">{inr(order.total)}</span>
