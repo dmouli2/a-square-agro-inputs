@@ -275,15 +275,15 @@ describe("createSupabaseProductRepository", () => {
   });
 
   it("createVariant inserts and returns the mapped variant", async () => {
-    from.mockReturnValue(fakeQuery({ data: { id: "v2", product_id: "p1", sku: "SKU-2", label: "1 L", pack_size: 1, unit: "litre", price: 100, mrp: 120, stock_qty: 5 }, error: null }));
+    from.mockReturnValue(fakeQuery({ data: { id: "v2", product_id: "p1", sku: "SKU-2", label: "1 L", pack_size: 1, unit: "L", price: 100, mrp: 120, stock_qty: 5 }, error: null }));
     const repo = createSupabaseProductRepository();
-    expect(await repo.createVariant("p1", { sku: "SKU-2", label: "1 L", packSize: 1, unit: "litre", price: 100, mrp: 120, stockQty: 5 })).toMatchObject({ id: "v2" });
+    expect(await repo.createVariant("p1", { sku: "SKU-2", label: "1 L", packSize: 1, unit: "L", price: 100, mrp: 120, stockQty: 5 })).toMatchObject({ id: "v2" });
   });
 
   it("createVariant throws on db error", async () => {
     from.mockReturnValue(fakeQuery({ data: null, error: { message: "boom" } }));
     const repo = createSupabaseProductRepository();
-    await expect(repo.createVariant("p1", { sku: "SKU-2", label: "1 L", packSize: 1, unit: "litre", price: 100, mrp: 120, stockQty: 5 })).rejects.toThrow("boom");
+    await expect(repo.createVariant("p1", { sku: "SKU-2", label: "1 L", packSize: 1, unit: "L", price: 100, mrp: 120, stockQty: 5 })).rejects.toThrow("boom");
   });
 
   it("updateVariant applies a partial patch", async () => {

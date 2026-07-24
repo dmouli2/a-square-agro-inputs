@@ -41,7 +41,7 @@ export const mockCookieStore = {
 };
 
 export const mockHeadersStore = {
-  get: vi.fn((): string | null => null),
+  get: vi.fn<(name: string) => string | null>(() => null),
 };
 
 vi.mock("next/headers", () => ({
