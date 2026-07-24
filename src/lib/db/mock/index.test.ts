@@ -329,6 +329,46 @@ describe("createMockDb", () => {
     });
   });
 
+  describe("loginRateLimiter", () => {
+    it("allows and records attempts under both the ip and email limits", async () => {
+      const db = createMockDb();
+      const result = await db.loginRateLimiter.checkAndRecord({ ip: "1.2.3.4", email: "admin@example.com" });
+      expect(result).toEqual({ allowed: true });
+    });
+
+    it("blocks once the per-email limit is reached, even from different ips", async () => {
+      const db = createMockDb();
+      for (let i = 0; i < 5; i++) {
+        await db.loginRateLimiter.checkAndRecord({ ip: `1.2.3.${i}`, email: "admin@example.com" });
+      }
+      const result = await db.loginRateLimiter.checkAndRecord({ ip: "1.2.3.99", email: "admin@example.com" });
+      expect(result.allowed).toBe(false);
+      expect(result.retryAfterSeconds).toBeGreaterThan(0);
+    });
+
+    it("blocks once the per-ip limit is reached, even with different emails", async () => {
+      const db = createMockDb();
+      for (let i = 0; i < 10; i++) {
+        await db.loginRateLimiter.checkAndRecord({ ip: "1.2.3.4", email: `staff${i}@example.com` });
+      }
+      const result = await db.loginRateLimiter.checkAndRecord({ ip: "1.2.3.4", email: "someone-else@example.com" });
+      expect(result.allowed).toBe(false);
+    });
+
+    it("expires old attempts outside the sliding window", async () => {
+      vi.useFakeTimers();
+      const db = createMockDb();
+      vi.setSystemTime(new Date("2026-07-01T00:00:00.000Z"));
+      for (let i = 0; i < 5; i++) {
+        await db.loginRateLimiter.checkAndRecord({ ip: "1.2.3.4", email: "admin@example.com" });
+      }
+      vi.setSystemTime(new Date("2026-07-01T00:16:00.000Z")); // 16 minutes later — past the 15-minute window
+      const result = await db.loginRateLimiter.checkAndRecord({ ip: "1.2.3.4", email: "admin@example.com" });
+      vi.useRealTimers();
+      expect(result).toEqual({ allowed: true });
+    });
+  });
+
   describe("errorLogs", () => {
     it("create then list returns the entry, newest first, with a generated id", async () => {
       const db = createMockDb();

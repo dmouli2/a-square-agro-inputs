@@ -23,10 +23,12 @@ const admin: Staff = { id: "s1", name: "Admin", email: "admin@example.com", pass
 
 describe("login", () => {
   const findByEmail = vi.fn();
+  const checkAndRecord = vi.fn();
 
   beforeEach(() => {
     findByEmail.mockReset();
-    vi.mocked(getDb).mockReturnValue({ staff: { findByEmail } } as never);
+    checkAndRecord.mockReset().mockResolvedValue({ allowed: true });
+    vi.mocked(getDb).mockReturnValue({ staff: { findByEmail }, loginRateLimiter: { checkAndRecord } } as never);
     mockCookieStore.set.mockClear();
   });
 
@@ -63,6 +65,19 @@ describe("login", () => {
     findByEmail.mockResolvedValue(admin);
     await login({ error: null }, formData({ email: "  Admin@Example.com  ", password: "wrong" })).catch(() => {});
     expect(findByEmail).toHaveBeenCalledWith("admin@example.com");
+  });
+
+  it("blocks the attempt once rate-limited, without checking the password", async () => {
+    checkAndRecord.mockResolvedValue({ allowed: false, retryAfterSeconds: 900 });
+    const result = await login({ error: null }, formData({ email: admin.email, password: "correct-horse-battery-staple" }));
+    expect(result.error).toMatch(/too many login attempts/i);
+    expect(findByEmail).not.toHaveBeenCalled();
+  });
+
+  it("checks the rate limit by ip and the normalized email", async () => {
+    findByEmail.mockResolvedValue(admin);
+    await login({ error: null }, formData({ email: "  Admin@Example.com  ", password: "wrong" }));
+    expect(checkAndRecord).toHaveBeenCalledWith({ ip: "unknown", email: "admin@example.com" });
   });
 
   it("signs a session and redirects to /admin on success", async () => {

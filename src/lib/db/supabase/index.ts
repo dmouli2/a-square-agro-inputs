@@ -6,6 +6,7 @@ import { createSupabaseOrderRepository } from "./orderRepository";
 import { createSupabaseStaffRepository } from "./staffRepository";
 import { createSupabaseCustomerRepository } from "./customerRepository";
 import { createSupabaseRateLimiterRepository } from "./rateLimitRepository";
+import { createSupabaseLoginRateLimiterRepository } from "./loginRateLimitRepository";
 import { createSupabaseErrorLogRepository } from "./errorLogRepository";
 
 export function createSupabaseDb(): Database {
@@ -18,6 +19,7 @@ export function createSupabaseDb(): Database {
     staff: createSupabaseStaffRepository(),
     customers: createSupabaseCustomerRepository(),
     rateLimiter: createSupabaseRateLimiterRepository(),
+    loginRateLimiter: createSupabaseLoginRateLimiterRepository(),
     errorLogs: createSupabaseErrorLogRepository(),
   };
 }

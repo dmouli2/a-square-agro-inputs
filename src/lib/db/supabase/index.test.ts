@@ -14,6 +14,7 @@ describe("createSupabaseDb", () => {
     // borrows the mock adapter's always-null implementation for that port.
     expect(db.coupons).toBeDefined();
     expect(db.rateLimiter).toBeDefined();
+    expect(db.loginRateLimiter).toBeDefined();
     expect(db.errorLogs).toBeDefined();
   });
 

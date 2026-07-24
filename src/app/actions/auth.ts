@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
+import { getClientIp } from "@/lib/net";
 import { createSessionToken, SESSION_COOKIE_NAME } from "@/lib/session";
 
 export interface LoginState {
@@ -23,7 +24,14 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
     return { error: "Please enter your email and password." };
   }
 
-  const staff = await getDb().staff.findByEmail(email.trim().toLowerCase());
+  const normalizedEmail = email.trim().toLowerCase();
+  const ip = await getClientIp();
+  const rateLimit = await getDb().loginRateLimiter.checkAndRecord({ ip, email: normalizedEmail });
+  if (!rateLimit.allowed) {
+    return { error: "Too many login attempts. Please wait a few minutes and try again." };
+  }
+
+  const staff = await getDb().staff.findByEmail(normalizedEmail);
   const valid = await bcrypt.compare(password, staff && staff.active ? staff.passwordHash : DUMMY_PASSWORD_HASH);
 
   if (!staff || !staff.active || !valid) {

@@ -1,6 +1,13 @@
 import bcrypt from "bcryptjs";
 import type { Database } from "@/lib/db/types";
-import { RATE_LIMIT_MAX_PER_IP, RATE_LIMIT_MAX_PER_PHONE, RATE_LIMIT_WINDOW_SECONDS } from "@/lib/db/rateLimitConfig";
+import {
+  RATE_LIMIT_MAX_PER_IP,
+  RATE_LIMIT_MAX_PER_PHONE,
+  RATE_LIMIT_WINDOW_SECONDS,
+  LOGIN_RATE_LIMIT_MAX_PER_EMAIL,
+  LOGIN_RATE_LIMIT_MAX_PER_IP,
+  LOGIN_RATE_LIMIT_WINDOW_SECONDS,
+} from "@/lib/db/rateLimitConfig";
 import { CATEGORIES, PRODUCTS } from "@/lib/mock-data";
 import type {
   Address,
@@ -20,12 +27,19 @@ interface CheckoutAttempt {
   createdAt: number;
 }
 
+interface LoginAttempt {
+  ip: string;
+  email: string;
+  createdAt: number;
+}
+
 interface MockStore {
   categories: Category[];
   products: ProductWithVariants[];
   orders: Order[];
   customers: Customer[];
   checkoutAttempts: CheckoutAttempt[];
+  loginAttempts: LoginAttempt[];
   errorLogs: ErrorLogEntry[];
   nextOrderId: number;
   nextCustomerId: number;
@@ -61,6 +75,7 @@ function getStore(): MockStore {
       orders: [],
       customers: [],
       checkoutAttempts: [],
+      loginAttempts: [],
       errorLogs: [],
       nextOrderId: 1,
       nextCustomerId: 1,
@@ -313,6 +328,20 @@ export function createMockDb(): Database {
 
         store.checkoutAttempts.push({ ip, phone, createdAt: Date.now() });
         return allowed ? { allowed: true } : { allowed: false, retryAfterSeconds: RATE_LIMIT_WINDOW_SECONDS };
+      },
+    },
+    loginRateLimiter: {
+      async checkAndRecord({ ip, email }) {
+        const store = getStore();
+        const cutoff = Date.now() - LOGIN_RATE_LIMIT_WINDOW_SECONDS * 1000;
+        store.loginAttempts = store.loginAttempts.filter((a) => a.createdAt >= cutoff);
+
+        const ipCount = store.loginAttempts.filter((a) => a.ip === ip).length;
+        const emailCount = store.loginAttempts.filter((a) => a.email === email).length;
+        const allowed = ipCount < LOGIN_RATE_LIMIT_MAX_PER_IP && emailCount < LOGIN_RATE_LIMIT_MAX_PER_EMAIL;
+
+        store.loginAttempts.push({ ip, email, createdAt: Date.now() });
+        return allowed ? { allowed: true } : { allowed: false, retryAfterSeconds: LOGIN_RATE_LIMIT_WINDOW_SECONDS };
       },
     },
     errorLogs: {

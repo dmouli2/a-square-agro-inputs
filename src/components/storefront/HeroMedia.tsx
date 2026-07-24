@@ -56,7 +56,7 @@ export function HeroMedia({ posterSrc, posterAlt, videoSrc }: HeroMediaProps) {
 
   return (
     <div className="absolute inset-0 bg-primary-950">
-      <Image src={posterSrc} alt={posterAlt} fill priority sizes="100vw" className="object-cover" />
+      <Image src={posterSrc} alt={posterAlt} fill preload fetchPriority="high" sizes="100vw" className="object-cover" />
 
       {shouldLoadVideo && videoSrc && (
         <video

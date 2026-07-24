@@ -31,7 +31,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-primary-800/60">
-        <div className="mx-auto max-w-6xl px-4 py-4 text-xs text-primary-100/60">
+        <div className="mx-auto max-w-6xl px-4 py-4 text-xs text-primary-100/80">
           © {new Date().getFullYear()} A Square Agro Inputs. All rights reserved.
         </div>
       </div>

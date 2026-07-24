@@ -67,6 +67,12 @@ export interface ErrorLogRepository {
   list(limit?: number): Promise<ErrorLogEntry[]>;
 }
 
+/** Backs admin login brute-force protection — see src/app/actions/auth.ts. */
+export interface LoginRateLimiterRepository {
+  /** Records this attempt and reports whether it's within the allowed rate for this ip/email pair. */
+  checkAndRecord(input: { ip: string; email: string }): Promise<RateLimitResult>;
+}
+
 export interface Database {
   categories: CategoryRepository;
   products: ProductRepository;
@@ -75,5 +81,6 @@ export interface Database {
   staff: StaffRepository;
   customers: CustomerRepository;
   rateLimiter: RateLimiterRepository;
+  loginRateLimiter: LoginRateLimiterRepository;
   errorLogs: ErrorLogRepository;
 }
