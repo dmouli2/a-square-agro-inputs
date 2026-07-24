@@ -141,4 +141,32 @@ describe("ProductForm", () => {
     resolveUpdate({ error: null });
     expect(await screen.findByRole("button", { name: "Save changes" })).toBeInTheDocument();
   });
+
+  it("keeps a newly picked category visible after a successful save instead of reverting to the pre-edit value", async () => {
+    // Regression test: React 19 resets uncontrolled fields to defaultValue
+    // once a form action settles. Edit mode revalidates in place (no
+    // redirect), so this used to visually snap every field back to its
+    // pre-edit value right after a successful save, even though the database
+    // write succeeded — see ProductForm's formVersion remount fix.
+    let resolveUpdate!: (value: { error: string | null }) => void;
+    vi.mocked(updateProduct).mockReturnValue(
+      new Promise((resolve) => {
+        resolveUpdate = resolve;
+      })
+    );
+    const user = userEvent.setup();
+    const { container, rerender } = render(<ProductForm categories={categories} mode="edit" product={product} />);
+
+    await user.selectOptions(field(container, "categoryId"), "cat-1");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // Next.js delivers the revalidated `product` prop alongside the settled
+    // action state; simulate that prop refresh landing before the action
+    // resolves.
+    rerender(<ProductForm categories={categories} mode="edit" product={{ ...product, categoryId: "cat-1" }} />);
+    resolveUpdate({ error: null });
+
+    await screen.findByRole("button", { name: "Save changes" });
+    expect(field(container, "categoryId")).toHaveValue("cat-1");
+  });
 });

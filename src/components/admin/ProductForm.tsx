@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { Category, Product } from "@/types";
 import { createProduct, updateProduct, type ProductFormState } from "@/app/actions/products";
 import { Button } from "@/components/ui/Button";
@@ -22,9 +22,24 @@ interface ProductFormProps {
 export function ProductForm({ categories, mode, product }: ProductFormProps) {
   const action = mode === "create" ? createProduct : updateProduct.bind(null, product!.id);
   const [state, formAction, isPending] = useActionState(action, initialState);
+  // Every field below is uncontrolled (defaultValue only). React 19 resets
+  // uncontrolled fields to their defaultValue once a form action settles —
+  // fine on create (the page redirects away), but edit mode revalidates and
+  // re-renders in place, so without forcing a remount here a successful save
+  // would visually snap every field back to its pre-edit value even though
+  // the database write succeeded (defaultValue was still whatever it was at
+  // the form's original mount). Bumping the key on a successful save forces
+  // a fresh mount with defaultValue re-read from the newly revalidated
+  // `product` prop, matching what was just saved.
+  const [lastState, setLastState] = useState(state);
+  const [formVersion, setFormVersion] = useState(0);
+  if (state !== lastState) {
+    setLastState(state);
+    if (state.error === null) setFormVersion((v) => v + 1);
+  }
 
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form key={formVersion} action={formAction} className="flex flex-col gap-5">
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label className={labelClass} htmlFor="name">Product name</label>
