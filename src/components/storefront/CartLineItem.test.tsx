@@ -2,26 +2,21 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CartLineItem } from "./CartLineItem";
-import { removeFromCart, updateCartQuantity } from "@/app/actions/cart";
-
-vi.mock("@/app/actions/cart", () => ({
-  removeFromCart: vi.fn(),
-  updateCartQuantity: vi.fn(),
-}));
 
 const baseProps = {
-  variantId: "v1",
   productName: "Urea 50kg",
   brand: "IFFCO",
   variantLabel: "50 kg bag",
   price: 300,
   quantity: 2,
+  onQuantityChange: vi.fn(),
+  onRemove: vi.fn(),
 };
 
 describe("CartLineItem", () => {
   beforeEach(() => {
-    vi.mocked(removeFromCart).mockReset();
-    vi.mocked(updateCartQuantity).mockReset();
+    baseProps.onQuantityChange.mockReset();
+    baseProps.onRemove.mockReset();
   });
 
   it("renders product details, quantity and the line total", () => {
@@ -33,25 +28,25 @@ describe("CartLineItem", () => {
     expect(screen.getByText("₹600")).toBeInTheDocument();
   });
 
-  it("increases quantity when + is clicked", async () => {
+  it("calls onQuantityChange with quantity+1 when + is clicked", async () => {
     const user = userEvent.setup();
     render(<CartLineItem {...baseProps} />);
     await user.click(screen.getByRole("button", { name: "Increase quantity" }));
-    expect(updateCartQuantity).toHaveBeenCalledWith("v1", 3);
+    expect(baseProps.onQuantityChange).toHaveBeenCalledWith(3);
   });
 
-  it("decreases quantity when - is clicked", async () => {
+  it("calls onQuantityChange with quantity-1 when - is clicked", async () => {
     const user = userEvent.setup();
     render(<CartLineItem {...baseProps} />);
     await user.click(screen.getByRole("button", { name: "Decrease quantity" }));
-    expect(updateCartQuantity).toHaveBeenCalledWith("v1", 1);
+    expect(baseProps.onQuantityChange).toHaveBeenCalledWith(1);
   });
 
-  it("removes the item when the remove button is clicked", async () => {
+  it("calls onRemove when the remove button is clicked", async () => {
     const user = userEvent.setup();
     render(<CartLineItem {...baseProps} />);
     await user.click(screen.getByRole("button", { name: "Remove item" }));
-    expect(removeFromCart).toHaveBeenCalledWith("v1");
+    expect(baseProps.onRemove).toHaveBeenCalled();
   });
 
   it("shows the brand initial in the thumbnail", () => {

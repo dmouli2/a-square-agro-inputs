@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/storefront/Logo";
+import { useCartCount } from "@/components/storefront/CartCountContext";
 
 const SEARCH_ICON = (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -23,7 +24,8 @@ const CART_ICON = (
   </svg>
 );
 
-export function MobileHeaderSearch({ cartCount = 0 }: { cartCount?: number }) {
+export function MobileHeaderSearch() {
+  const { count: cartCount } = useCartCount();
   const [isOpen, setIsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 

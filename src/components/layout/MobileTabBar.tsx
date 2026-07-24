@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCartCount } from "@/components/storefront/CartCountContext";
 
 const TABS = [
   { href: "/", label: "Home", icon: "🏠", exact: true },
@@ -14,7 +15,8 @@ function isTabActive(pathname: string, href: string, exact: boolean) {
   return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function MobileTabBar({ cartCount = 0 }: { cartCount?: number }) {
+export function MobileTabBar() {
+  const { count: cartCount } = useCartCount();
   const pathname = usePathname();
 
   return (

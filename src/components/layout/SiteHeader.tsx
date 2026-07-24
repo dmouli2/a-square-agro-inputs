@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Logo } from "@/components/storefront/Logo";
 import { SearchBar } from "@/components/storefront/SearchBar";
+import { useCartCount } from "@/components/storefront/CartCountContext";
 import { MobileHeaderSearch } from "./MobileHeaderSearch";
 
 const SEARCH_PROMPTS = [
@@ -25,7 +26,8 @@ function isNavLinkActive(pathname: string, currentCategory: string | null, linkC
   return linkCategory === null ? !currentCategory : currentCategory === linkCategory;
 }
 
-export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
+export function SiteHeader() {
+  const { count: cartCount } = useCartCount();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get("category");
@@ -87,7 +89,7 @@ export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
 
         {/* Mobile (<md): logo + search icon + cart, expands to a search field in place */}
         <div className="flex md:hidden w-full">
-          <MobileHeaderSearch cartCount={cartCount} />
+          <MobileHeaderSearch />
         </div>
       </div>
     </header>

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { makeProduct } from "@/test/fixtures";
+import { CartCountProvider } from "@/components/storefront/CartCountContext";
 
 const getCartMap = vi.fn();
 const findByVariantId = vi.fn();
@@ -35,6 +36,10 @@ vi.mock("@/app/actions/checkout", () => ({
 
 import CartPage from "./page";
 
+function renderWithCartCount(jsx: React.ReactNode) {
+  return render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
+}
+
 describe("CartPage", () => {
   beforeEach(() => {
     getCartMap.mockReset();
@@ -58,7 +63,7 @@ describe("CartPage", () => {
     findByVariantId.mockResolvedValue(product);
 
     const jsx = await CartPage();
-    render(jsx);
+    renderWithCartCount(jsx);
 
     expect(screen.getByText("Your cart")).toBeInTheDocument();
     expect(screen.getByText("Hybrid Maize Seed")).toBeInTheDocument();
@@ -84,7 +89,7 @@ describe("CartPage", () => {
     );
 
     const jsx = await CartPage();
-    render(jsx);
+    renderWithCartCount(jsx);
 
     expect(screen.getByText("Hybrid Maize Seed")).toBeInTheDocument();
   });

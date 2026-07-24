@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import type { ProductVariant } from "@/types";
 import { PriceTag } from "./PriceTag";
 import { addToCart, updateCartQuantity } from "@/app/actions/cart";
+import { useCartCount } from "./CartCountContext";
 
 const CART_ICON = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -34,10 +35,17 @@ interface ProductCardActionsProps {
 
 export function ProductCardActions({ variants, cart }: ProductCardActionsProps) {
   const [selectedId, setSelectedId] = useState(lowestPricedVariant(variants).id);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const { bump } = useCartCount();
+  // Optimistic quantities are keyed by variant id (not a single number) so switching between
+  // pack-size chips doesn't lose an in-flight update on a different variant.
+  const [optimisticCart, setOptimisticQuantity] = useOptimistic(
+    cart,
+    (state, update: { variantId: string; quantity: number }) => ({ ...state, [update.variantId]: update.quantity })
+  );
   const selected = variants.find((v) => v.id === selectedId) ?? variants[0];
   const inStock = selected.stockQty > 0;
-  const quantity = cart[selected.id] ?? 0;
+  const quantity = optimisticCart[selected.id] ?? 0;
 
   function stop(e: React.MouseEvent) {
     e.preventDefault();
@@ -45,14 +53,21 @@ export function ProductCardActions({ variants, cart }: ProductCardActionsProps) 
   }
 
   function add() {
-    startTransition(() => {
-      addToCart(selected.id, 1);
+    const variantId = selected.id;
+    startTransition(async () => {
+      setOptimisticQuantity({ variantId, quantity: 1 });
+      bump(1);
+      await addToCart(variantId, 1);
     });
   }
 
   function change(next: number) {
-    startTransition(() => {
-      updateCartQuantity(selected.id, next);
+    const variantId = selected.id;
+    const delta = next - quantity;
+    startTransition(async () => {
+      setOptimisticQuantity({ variantId, quantity: next });
+      bump(delta);
+      await updateCartQuantity(variantId, next);
     });
   }
 
@@ -93,8 +108,7 @@ export function ProductCardActions({ variants, cart }: ProductCardActionsProps) 
             stop(e);
             add();
           }}
-          disabled={isPending}
-          className="flex h-10 items-center justify-center gap-2 rounded-full bg-primary-700 text-white text-xs font-bold uppercase tracking-wide shadow-sm hover:bg-primary-800 hover:shadow-card active:bg-primary-900 active:scale-[0.98] transition-all disabled:opacity-60 disabled:active:scale-100"
+          className="flex h-10 items-center justify-center gap-2 rounded-full bg-primary-700 text-white text-xs font-bold uppercase tracking-wide shadow-sm hover:bg-primary-800 hover:shadow-card active:bg-primary-900 active:scale-[0.98] transition-all"
         >
           {CART_ICON}
           Add to cart
@@ -107,9 +121,8 @@ export function ProductCardActions({ variants, cart }: ProductCardActionsProps) 
               stop(e);
               change(quantity - 1);
             }}
-            disabled={isPending}
             aria-label="Decrease quantity"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-primary-800 active:scale-90 transition-all disabled:opacity-60 disabled:active:scale-100"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-primary-800 active:scale-90 transition-all"
           >
             {MINUS_ICON}
           </button>
@@ -120,9 +133,8 @@ export function ProductCardActions({ variants, cart }: ProductCardActionsProps) 
               stop(e);
               change(quantity + 1);
             }}
-            disabled={isPending}
             aria-label="Increase quantity"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-primary-800 active:scale-90 transition-all disabled:opacity-60 disabled:active:scale-100"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-primary-800 active:scale-90 transition-all"
           >
             {PLUS_ICON}
           </button>

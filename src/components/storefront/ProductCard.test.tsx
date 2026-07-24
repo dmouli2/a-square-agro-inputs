@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { ProductCard } from "./ProductCard";
+import { CartCountProvider } from "./CartCountContext";
 import type { ProductWithVariants } from "@/types";
+import type { ReactElement } from "react";
 
 vi.mock("@/app/actions/cart", () => ({
   addToCart: vi.fn(),
@@ -13,6 +15,10 @@ vi.mock("@/lib/storage", () => ({
     getPublicUrl: (path: string) => `https://cdn.example.com/${path}`,
   }),
 }));
+
+function renderCard(jsx: ReactElement) {
+  return render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
+}
 
 function makeProduct(overrides: Partial<ProductWithVariants> = {}): ProductWithVariants {
   return {
@@ -45,13 +51,13 @@ function makeProduct(overrides: Partial<ProductWithVariants> = {}): ProductWithV
 
 describe("ProductCard", () => {
   it("shows a brand-initial placeholder when the product has no images and no category is given", () => {
-    render(<ProductCard product={makeProduct()} />);
+    renderCard(<ProductCard product={makeProduct()} />);
     expect(screen.getByText("I")).toBeInTheDocument();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
   it("shows a category fallback photo when the product has no images but a known category is given", () => {
-    render(<ProductCard product={makeProduct()} categorySlug="fertilizers" />);
+    renderCard(<ProductCard product={makeProduct()} categorySlug="fertilizers" />);
     expect(screen.queryByText("I")).not.toBeInTheDocument();
     expect(screen.getByText("Representative photo")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Urea 50kg Bag" })).toHaveAttribute(
@@ -61,7 +67,7 @@ describe("ProductCard", () => {
   });
 
   it("prefers the product's own photo over the category fallback when both are available", () => {
-    render(
+    renderCard(
       <ProductCard
         product={makeProduct({ images: ["products/urea.jpg"] })}
         categorySlug="fertilizers"
@@ -75,13 +81,13 @@ describe("ProductCard", () => {
   });
 
   it("renders the product photo when images are present", () => {
-    render(<ProductCard product={makeProduct({ images: ["products/urea.jpg"] })} />);
+    renderCard(<ProductCard product={makeProduct({ images: ["products/urea.jpg"] })} />);
     const img = screen.getByRole("img", { name: "Urea 50kg Bag" });
     expect(img).toHaveAttribute("src", "https://cdn.example.com/products/urea.jpg");
   });
 
   it("links to the product detail page", () => {
-    render(<ProductCard product={makeProduct()} />);
+    renderCard(<ProductCard product={makeProduct()} />);
     expect(screen.getAllByRole("link")[0]).toHaveAttribute("href", "/product/urea-50kg");
   });
 
@@ -102,24 +108,24 @@ describe("ProductCard", () => {
         },
       ],
     });
-    render(<ProductCard product={product} />);
+    renderCard(<ProductCard product={product} />);
     expect(screen.getAllByText("Out of stock").length).toBeGreaterThan(0);
     expect(screen.queryByText("Bestseller")).not.toBeInTheDocument();
   });
 
   it("shows the Bestseller ribbon when in stock and flagged", () => {
-    render(<ProductCard product={makeProduct({ isBestseller: true })} />);
+    renderCard(<ProductCard product={makeProduct({ isBestseller: true })} />);
     expect(screen.getByText("Bestseller")).toBeInTheDocument();
   });
 
   it("shows neither badge when in stock and not a bestseller", () => {
-    render(<ProductCard product={makeProduct()} />);
+    renderCard(<ProductCard product={makeProduct()} />);
     expect(screen.queryByText("Bestseller")).not.toBeInTheDocument();
     expect(screen.queryByText("Out of stock")).not.toBeInTheDocument();
   });
 
   it("passes the cart map through to the add-to-cart actions", () => {
-    render(<ProductCard product={makeProduct()} cart={{ v1: 4 }} />);
+    renderCard(<ProductCard product={makeProduct()} cart={{ v1: 4 }} />);
     expect(screen.getByText("4")).toBeInTheDocument();
   });
 });

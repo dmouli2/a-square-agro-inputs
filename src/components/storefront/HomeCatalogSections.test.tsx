@@ -23,6 +23,7 @@ vi.mock("@/lib/storage", () => ({
 }));
 
 import { HomeCatalogSections } from "./HomeCatalogSections";
+import { CartCountProvider } from "./CartCountContext";
 
 describe("HomeCatalogSections", () => {
   beforeEach(() => {
@@ -35,7 +36,7 @@ describe("HomeCatalogSections", () => {
     listProducts.mockResolvedValue([makeProduct(), makeProduct({ id: "prod-2", slug: "urea", name: "Urea 46%" })]);
 
     const jsx = await HomeCatalogSections();
-    render(jsx);
+    render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
 
     expect(screen.getAllByText("Seeds").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Fertilizers").length).toBeGreaterThan(0);
@@ -49,7 +50,7 @@ describe("HomeCatalogSections", () => {
     listProducts.mockResolvedValue([makeProduct({ images: [], categoryId: "cat-2" })]);
 
     const jsx = await HomeCatalogSections();
-    render(jsx);
+    render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
 
     expect(screen.getByText("Representative photo")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Hybrid Maize Seed" })).toHaveAttribute(
@@ -63,7 +64,7 @@ describe("HomeCatalogSections", () => {
     listProducts.mockResolvedValue([makeProduct()]);
 
     const jsx = await HomeCatalogSections();
-    render(jsx);
+    render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
 
     expect(screen.getByText("Shop by category")).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /Fertilizers/ }).length).toBeGreaterThan(0);
@@ -78,7 +79,7 @@ describe("HomeCatalogSections", () => {
     ]);
 
     const jsx = await HomeCatalogSections();
-    render(jsx);
+    render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
 
     expect(screen.getByLabelText("Brands we stock: Bayer, IFFCO, Tata Rallis")).toBeInTheDocument();
   });
@@ -88,7 +89,7 @@ describe("HomeCatalogSections", () => {
     listProducts.mockResolvedValue([makeProduct({ id: "p1", brand: "IFFCO" })]);
 
     const jsx = await HomeCatalogSections();
-    render(jsx);
+    render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
 
     expect(screen.queryByLabelText(/Brands we stock/)).not.toBeInTheDocument();
   });
@@ -98,7 +99,7 @@ describe("HomeCatalogSections", () => {
     listProducts.mockResolvedValue([]);
 
     const jsx = await HomeCatalogSections();
-    render(jsx);
+    render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
 
     expect(screen.getByText("Popular right now")).toBeInTheDocument();
     expect(screen.getByText("Shop by category")).toBeInTheDocument();

@@ -1,36 +1,28 @@
-"use client";
-
-import { useTransition } from "react";
 import Image from "next/image";
-import { removeFromCart, updateCartQuantity } from "@/app/actions/cart";
 
 interface CartLineItemProps {
-  variantId: string;
   productName: string;
   brand: string;
   variantLabel: string;
   price: number;
   quantity: number;
   imageUrl?: string | null;
+  onQuantityChange: (next: number) => void;
+  onRemove: () => void;
 }
 
-export function CartLineItem({ variantId, productName, brand, variantLabel, price, quantity, imageUrl }: CartLineItemProps) {
-  const [isPending, startTransition] = useTransition();
-
-  function setQuantity(next: number) {
-    startTransition(() => {
-      updateCartQuantity(variantId, next);
-    });
-  }
-
-  function remove() {
-    startTransition(() => {
-      removeFromCart(variantId);
-    });
-  }
-
+export function CartLineItem({
+  productName,
+  brand,
+  variantLabel,
+  price,
+  quantity,
+  imageUrl,
+  onQuantityChange,
+  onRemove,
+}: CartLineItemProps) {
   return (
-    <div className={`flex gap-3 py-4 border-b border-border last:border-0 ${isPending ? "opacity-50" : ""}`}>
+    <div className="flex gap-3 py-4 border-b border-border last:border-0">
       <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">
         {imageUrl ? (
           <Image src={imageUrl} alt={productName} fill sizes="64px" className="object-cover" />
@@ -46,17 +38,17 @@ export function CartLineItem({ variantId, productName, brand, variantLabel, pric
           <div className="flex items-center rounded-control border border-border h-8">
             <button
               type="button"
-              onClick={() => setQuantity(quantity - 1)}
-              className="w-7 h-full text-sm text-foreground/70 hover:text-foreground"
+              onClick={() => onQuantityChange(quantity - 1)}
+              className="w-7 h-full text-sm text-foreground/70 hover:text-foreground active:scale-90 transition-transform"
               aria-label="Decrease quantity"
             >
               −
             </button>
-            <span className="w-6 text-center text-xs font-medium">{quantity}</span>
+            <span className="w-6 text-center text-xs font-medium tabular-nums">{quantity}</span>
             <button
               type="button"
-              onClick={() => setQuantity(quantity + 1)}
-              className="w-7 h-full text-sm text-foreground/70 hover:text-foreground"
+              onClick={() => onQuantityChange(quantity + 1)}
+              className="w-7 h-full text-sm text-foreground/70 hover:text-foreground active:scale-90 transition-transform"
               aria-label="Increase quantity"
             >
               +
@@ -69,9 +61,9 @@ export function CartLineItem({ variantId, productName, brand, variantLabel, pric
       </div>
       <button
         type="button"
-        onClick={remove}
+        onClick={onRemove}
         aria-label="Remove item"
-        className="self-start text-muted hover:text-red-600 transition-colors"
+        className="self-start text-muted hover:text-red-600 active:scale-90 transition-all"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />

@@ -29,6 +29,7 @@ vi.mock("@/app/actions/cart", () => ({
 }));
 
 import ShopPage from "./page";
+import { CartCountProvider } from "@/components/storefront/CartCountContext";
 
 describe("ShopPage", () => {
   beforeEach(() => {
@@ -43,7 +44,7 @@ describe("ShopPage", () => {
     listProducts.mockResolvedValue([makeProduct(), makeProduct({ id: "prod-2", slug: "urea", name: "Urea 46%" })]);
 
     const jsx = await ShopPage({ searchParams: Promise.resolve({}) });
-    render(jsx);
+    render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
 
     expect(screen.getByRole("heading", { name: "Shop all products" })).toBeInTheDocument();
     expect(screen.getByText("Hybrid Maize Seed")).toBeInTheDocument();
@@ -55,7 +56,7 @@ describe("ShopPage", () => {
     listProducts.mockResolvedValue([]);
 
     const jsx = await ShopPage({ searchParams: Promise.resolve({ category: "seeds" }) });
-    render(jsx);
+    render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
 
     expect(screen.getByRole("heading", { name: "Seeds" })).toBeInTheDocument();
     expect(screen.getByText("No products in this category yet.")).toBeInTheDocument();
@@ -65,7 +66,7 @@ describe("ShopPage", () => {
     listProducts.mockResolvedValue([]);
 
     const jsx = await ShopPage({ searchParams: Promise.resolve({ q: "sprayer" }) });
-    render(jsx);
+    render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
 
     expect(screen.getByRole("heading", { name: /Results for/ })).toBeInTheDocument();
     expect(screen.getByText("0 products found", { exact: false })).toBeInTheDocument();
@@ -76,7 +77,7 @@ describe("ShopPage", () => {
     listProducts.mockResolvedValue([makeProduct()]);
 
     const jsx = await ShopPage({ searchParams: Promise.resolve({ q: "maize" }) });
-    render(jsx);
+    render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
 
     expect(screen.getByText("1 product found", { exact: false })).toBeInTheDocument();
   });
@@ -85,7 +86,7 @@ describe("ShopPage", () => {
     listProducts.mockResolvedValue([makeProduct({ images: [], categoryId: "cat-2" })]);
 
     const jsx = await ShopPage({ searchParams: Promise.resolve({}) });
-    render(jsx);
+    render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
 
     expect(screen.getByText("Representative photo")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Hybrid Maize Seed" })).toHaveAttribute(
@@ -99,7 +100,7 @@ describe("ShopPage", () => {
     listProducts.mockResolvedValue([]);
 
     const jsx = await ShopPage({ searchParams: Promise.resolve({ category: "seeds" }) });
-    render(jsx);
+    render(<CartCountProvider initialCount={0}>{jsx}</CartCountProvider>);
 
     expect(screen.getByText("Everything for a strong start.")).toBeInTheDocument();
   });

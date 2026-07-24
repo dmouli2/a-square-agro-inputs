@@ -294,7 +294,7 @@ export function CheckoutForm({ subtotal }: { subtotal: number }) {
           </p>
         )}
 
-        <div className="fixed bottom-16 inset-x-0 z-30 border-t border-border bg-surface/95 backdrop-blur px-4 py-3 md:static md:z-auto md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-30 border-t border-border bg-surface/95 backdrop-blur px-4 py-3 md:static md:z-auto md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
           <div className="mx-auto max-w-2xl flex items-center gap-3 md:block md:max-w-none">
             <span className="flex-1 md:hidden">
               <span className="block text-xs text-muted">Total</span>
