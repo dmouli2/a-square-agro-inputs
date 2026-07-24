@@ -123,6 +123,13 @@ describe("removeProductImage", () => {
     expect(remove).not.toHaveBeenCalled();
   });
 
+  it("no-ops when the path doesn't belong to the product (would otherwise orphan another product's image)", async () => {
+    findById.mockResolvedValue(product);
+    await removeProductImage("prod-1", "other-product/photo.jpg");
+    expect(remove).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it("removes the file from storage and drops it from the product's image list", async () => {
     findById.mockResolvedValue(product);
     await removeProductImage("prod-1", "prod-1/existing.jpg");

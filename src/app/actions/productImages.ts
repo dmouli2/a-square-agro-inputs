@@ -33,7 +33,10 @@ export async function removeProductImage(productId: string, path: string) {
   await requireRole(["admin"]);
 
   const product = await getDb().products.findById(productId);
-  if (!product) return;
+  // Without this check, a path for a different product would still get
+  // deleted from the shared storage bucket, orphaning that other product's
+  // reference to it with no error anywhere.
+  if (!product || !product.images.includes(path)) return;
 
   await getImageStorage().remove([path]);
   await getDb().products.update(productId, { images: product.images.filter((p) => p !== path) });
