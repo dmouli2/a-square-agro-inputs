@@ -1,10 +1,8 @@
-import { getDb } from "@/lib/db";
-import { getCartMap } from "@/lib/cart";
-import { CategoryShowcase } from "@/components/storefront/CategoryShowcase";
-import { BrandMarquee } from "@/components/storefront/BrandMarquee";
-import { ProductCarousel } from "@/components/storefront/ProductCarousel";
+import { Suspense } from "react";
 import { HeroMedia } from "@/components/storefront/HeroMedia";
 import { FarmerPromiseVisual } from "@/components/storefront/FarmerPromiseVisual";
+import { HomeCatalogSections } from "@/components/storefront/HomeCatalogSections";
+import { HomeCatalogSkeleton } from "@/components/storefront/HomeCatalogSkeleton";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SoilHorizon } from "@/components/ui/SoilHorizon";
 import { ButtonLink } from "@/components/ui/Button";
@@ -52,14 +50,7 @@ const HOW_IT_WORKS = [
   },
 ];
 
-export default async function HomePage() {
-  const db = getDb();
-  const [categories, products, cart] = await Promise.all([db.categories.list(), db.products.list(), getCartMap()]);
-  const featured = products.slice(0, 8);
-  const categoryMap = Object.fromEntries(categories.map((c) => [c.id, c.slug]));
-  const brands = products.map((p) => p.brand);
-  const hasEnoughBrandsForMarquee = new Set(brands).size >= 3;
-
+export default function HomePage() {
   return (
     <div className="pb-8 md:pb-0">
       <section className="relative overflow-hidden">
@@ -89,37 +80,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {hasEnoughBrandsForMarquee && (
-        <section className="py-6 border-b border-border">
-          <ScrollReveal className="mx-auto max-w-6xl px-4 flex flex-col gap-3">
-            <span className="text-center text-xs font-medium text-muted uppercase tracking-wide">
-              Genuine products from brands you already trust
-            </span>
-            <BrandMarquee brands={brands} />
-          </ScrollReveal>
-        </section>
-      )}
-
-      <section className="mx-auto max-w-6xl px-4 py-6">
-        <ScrollReveal className="flex items-end justify-between mb-5">
-          <div>
-            <h2 className="font-display font-bold text-xl text-foreground">Popular right now</h2>
-            <p className="text-sm text-muted mt-0.5">Handpicked essentials for this season</p>
-          </div>
-          <ButtonLink href="/shop" variant="ghost" size="sm">
-            View all →
-          </ButtonLink>
-        </ScrollReveal>
-        <ProductCarousel products={featured} cart={cart} categoryMap={categoryMap} />
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 py-6">
-        <ScrollReveal className="mb-5">
-          <h2 className="font-display font-bold text-xl text-foreground">Shop by category</h2>
-          <p className="text-sm text-muted mt-0.5">Everything organised the way your field work is</p>
-        </ScrollReveal>
-        <CategoryShowcase categories={categories} />
-      </section>
+      <Suspense fallback={<HomeCatalogSkeleton />}>
+        <HomeCatalogSections />
+      </Suspense>
 
       <SoilHorizon />
 
